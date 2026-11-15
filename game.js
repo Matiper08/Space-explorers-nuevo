@@ -2,8 +2,85 @@
 (function startSpaceExplorers() {
   const data = window.SpaceData;
   const art = window.SpaceArt.keys;
-  const lunar = data.lunarWorld;
+  let lunar = data.lunarWorld;
   const errorPanel = document.getElementById("startup-error");
+  const journalStorageKey = "space-explorers-ecoscope-journal";
+  const languageStorageKey = "space-explorers-language";
+  const stationIds = data.lunarWorld.stations.map((station) => station.id);
+  let journalIds = [];
+  let languageStorageFailed = false;
+  let introShown = false;
+
+  try {
+    if (window.localStorage.getItem(languageStorageKey) === "es") data.setLanguage("es");
+  } catch (error) {
+    console.error("Could not read the saved language preference:", error);
+    languageStorageFailed = true;
+  }
+  lunar = data.lunarWorld;
+
+  try {
+    const storedJournal = window.localStorage.getItem(journalStorageKey);
+    if (storedJournal) {
+      let parsedJournal;
+      try {
+        parsedJournal = JSON.parse(storedJournal);
+      } catch (error) {
+        console.error("The saved Ecoscope Journal is not valid JSON:", error);
+        parsedJournal = [];
+      }
+      if (Array.isArray(parsedJournal)) {
+        const validJournal = parsedJournal.filter((id) => stationIds.includes(id));
+        if (validJournal.length !== parsedJournal.length) {
+          console.error("The saved Ecoscope Journal contains unknown mission IDs.");
+        }
+        journalIds = [...new Set(validJournal)];
+      } else {
+        console.error("The saved Ecoscope Journal must be a list of mission IDs.");
+      }
+    }
+  } catch (error) {
+    console.error("Could not read the saved Ecoscope Journal:", error);
+  }
+
+  document.documentElement.lang = data.language;
+  document.title = data.text.pageTitle;
+  document.getElementById("page-description").content = data.text.pageDescription;
+  document.getElementById("page-caption").textContent = data.text.footer;
+  document.getElementById("game-container").setAttribute("aria-label", data.text.gameLabel);
+
+  function applyLanguage(language) {
+    data.setLanguage(language);
+    lunar = data.lunarWorld;
+    document.documentElement.lang = language;
+    document.title = data.text.pageTitle;
+    document.getElementById("page-description").content = data.text.pageDescription;
+    document.getElementById("page-caption").textContent = data.text.footer;
+    document.getElementById("game-container").setAttribute("aria-label", data.text.gameLabel);
+    try {
+      window.localStorage.setItem(languageStorageKey, language);
+      languageStorageFailed = false;
+      return true;
+    } catch (error) {
+      console.error("Could not save the language preference:", error);
+      languageStorageFailed = true;
+      return false;
+    }
+  }
+
+  function saveJournalEntry(stationId) {
+    if (!stationIds.includes(stationId)) {
+      throw new RangeError(`Unknown Ecoscope Journal entry: ${stationId}`);
+    }
+    if (!journalIds.includes(stationId)) journalIds.push(stationId);
+    try {
+      window.localStorage.setItem(journalStorageKey, JSON.stringify(journalIds));
+      return true;
+    } catch (error) {
+      console.error("Could not save the mission card to the Ecoscope Journal:", error);
+      return false;
+    }
+  }
 
   if (!window.Phaser) {
     errorPanel.textContent = data.text.loadError;
@@ -89,10 +166,21 @@
         fontSize: "22px"
       }).setOrigin(0.5);
 
-      const button = this.add.rectangle(640, 470, 330, 68, 0xf0cd98, 1)
+      const languageButton = this.add.rectangle(1110, 42, 300, 46, 0x18223c, 0.96)
+        .setStrokeStyle(2, 0x8fa9c8, 0.9)
+        .setInteractive({ useHandCursor: true });
+      this.add.text(1110, 42, data.text.languageButton, {
+        color: "#fff1ce",
+        fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px",
+        fontStyle: "bold"
+      }).setOrigin(0.5);
+      languageButton.on("pointerdown", () => this.toggleLanguage());
+
+      const button = this.add.rectangle(640, 440, 350, 64, 0xf0cd98, 1)
         .setStrokeStyle(2, 0xffedcc, 0.9)
         .setInteractive({ useHandCursor: true });
-      const buttonLabel = this.add.text(640, 470, data.text.start, {
+      const buttonLabel = this.add.text(640, 440, data.text.start, {
         color: "#22253a",
         fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "22px",
@@ -105,23 +193,214 @@
       button.on("pointerdown", () => this.beginExpedition());
       buttonLabel.setInteractive({ useHandCursor: true }).on("pointerdown", () => this.beginExpedition());
 
-      this.add.text(640, 526, data.text.startHint, {
+      this.add.text(640, 485, data.text.startHint, {
         color: "#e4e6ed",
         fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "18px"
       }).setOrigin(0.5);
-      this.add.text(640, 650, data.text.footer, {
+
+      const journalButton = this.add.rectangle(640, 568, 500, 60, 0x243450, 0.98)
+        .setStrokeStyle(2, 0xb9d8e4, 0.9)
+        .setInteractive({ useHandCursor: true });
+      const journalLabel = this.add.text(640, 568, data.text.journalButton, {
+        color: "#f6f1e7",
+        fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px",
+        fontStyle: "bold",
+        align: "center",
+        wordWrap: { width: 460 }
+      }).setOrigin(0.5);
+      journalButton.on("pointerover", () => journalButton.setFillStyle(0x304462));
+      journalButton.on("pointerout", () => journalButton.setFillStyle(0x243450));
+      journalButton.on("pointerdown", () => this.openJournal());
+      journalLabel.setInteractive({ useHandCursor: true }).on("pointerdown", () => this.openJournal());
+
+      this.add.text(640, 674, data.text.footer, {
         color: "#d0d5e0",
         fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "18px"
       }).setOrigin(0.5);
+      if (languageStorageFailed) {
+        this.add.text(640, 632, data.text.languageStorageError, {
+          color: "#f0c6a8", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+          fontSize: "18px", align: "center", wordWrap: { width: 1100 }
+        }).setOrigin(0.5);
+      }
 
       this.input.keyboard.once("keydown-ENTER", () => this.beginExpedition());
       this.input.keyboard.once("keydown-SPACE", () => this.beginExpedition());
+      this.languageKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.L);
+    }
+
+    update() {
+      if (Phaser.Input.Keyboard.JustDown(this.languageKey)) this.toggleLanguage();
     }
 
     beginExpedition() {
       this.scene.start("ExpeditionScene");
+    }
+
+    openJournal() {
+      this.scene.start("JournalScene");
+    }
+
+    toggleLanguage() {
+      applyLanguage(data.language === "en" ? "es" : "en");
+      this.scene.restart();
+    }
+  }
+
+  class JournalScene extends Phaser.Scene {
+    constructor() {
+      super("JournalScene");
+    }
+
+    init(sceneData) {
+      this.selectedIndex = sceneData && Number.isInteger(sceneData.selectedIndex)
+        ? sceneData.selectedIndex
+        : 0;
+    }
+
+    create() {
+      this.add.image(0, 0, art.menuBackground).setOrigin(0);
+      this.add.rectangle(640, 360, 1280, 720, 0x091020, 0.72);
+      this.add.rectangle(640, 360, 1160, 620, 0x111a30, 0.97)
+        .setStrokeStyle(3, 0xe7c89b, 0.95);
+      this.add.text(640, 80, data.text.journalTitle, {
+        color: "#fff8ec", fontFamily: "Georgia, Times New Roman, serif",
+        fontSize: "34px", fontStyle: "bold", align: "center",
+        wordWrap: { width: 980 }
+      }).setOrigin(0.5);
+
+      this.languageButton = this.add.rectangle(1110, 42, 280, 44, 0x18223c, 0.98)
+        .setStrokeStyle(2, 0x8fa9c8, 0.9)
+        .setInteractive({ useHandCursor: true });
+      this.languageButtonLabel = this.add.text(1110, 42, data.text.languageButton, {
+        color: "#fff1ce", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", fontStyle: "bold"
+      }).setOrigin(0.5);
+      this.languageButton.on("pointerdown", () => this.toggleLanguage());
+      this.entryLayer = this.add.container(0, 0);
+      this.countText = this.add.text(640, 125, "", {
+        color: "#b9d8e4", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", fontStyle: "bold", align: "center"
+      }).setOrigin(0.5);
+      this.renderEntry();
+
+      const returnButton = this.add.rectangle(640, 658, 310, 48, 0x243450, 0.98)
+        .setStrokeStyle(2, 0xb9d8e4, 0.9)
+        .setInteractive({ useHandCursor: true });
+      this.add.text(640, 658, data.text.journalReturn, {
+        color: "#f6f1e7", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", fontStyle: "bold", align: "center",
+        wordWrap: { width: 280 }
+      }).setOrigin(0.5);
+      returnButton.on("pointerdown", () => this.scene.start("MenuScene"));
+      this.add.text(640, 705, data.text.journalInstructions, {
+        color: "#d8ddeb", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", align: "center"
+      }).setOrigin(0.5);
+
+      this.journalKeys = this.input.keyboard.addKeys({
+        left: Phaser.Input.Keyboard.KeyCodes.LEFT,
+        right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
+        enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
+        escape: Phaser.Input.Keyboard.KeyCodes.ESC,
+        language: Phaser.Input.Keyboard.KeyCodes.L
+      });
+    }
+
+    update() {
+      if (Phaser.Input.Keyboard.JustDown(this.journalKeys.language)) this.toggleLanguage();
+      if (Phaser.Input.Keyboard.JustDown(this.journalKeys.left)) this.changeEntry(-1);
+      if (Phaser.Input.Keyboard.JustDown(this.journalKeys.right)) this.changeEntry(1);
+      if (Phaser.Input.Keyboard.JustDown(this.journalKeys.enter)
+        || Phaser.Input.Keyboard.JustDown(this.journalKeys.escape)) {
+        this.scene.start("MenuScene");
+      }
+    }
+
+    getEntries() {
+      return journalIds
+        .map((id) => lunar.stations.find((station) => station.id === id))
+        .filter(Boolean);
+    }
+
+    renderEntry() {
+      this.entryLayer.removeAll(true);
+      const entries = this.getEntries();
+      this.selectedIndex = entries.length ? Phaser.Math.Wrap(this.selectedIndex, 0, entries.length) : 0;
+      this.countText.setText(languageStorageFailed
+        ? data.text.languageStorageError
+        : data.text.journalCount
+          .replace("{count}", String(entries.length))
+          .replace("{total}", String(lunar.stations.length)));
+      if (!entries.length) {
+        this.entryLayer.add(this.add.text(640, 350, data.text.journalEmpty, {
+          color: "#e5e9f2", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+          fontSize: "22px", align: "center", wordWrap: { width: 900 }
+        }).setOrigin(0.5));
+        return;
+      }
+
+      const station = entries[this.selectedIndex];
+      this.entryLayer.add(this.add.text(640, 158, station.title, {
+        color: "#f0cd98", fontFamily: "Georgia, Times New Roman, serif",
+        fontSize: "26px", fontStyle: "bold", align: "center",
+        wordWrap: { width: 1040 }
+      }).setOrigin(0.5));
+      [
+        ["what", 105, 204, 490],
+        ["why", 105, 310, 490],
+        ["how", 105, 416, 490],
+        ["learned", 665, 204, 500],
+        ["today", 665, 342, 500]
+      ].forEach(([key, x, y, width]) => {
+        this.entryLayer.add(this.add.text(x, y, lunar.cardLabels[key], {
+          color: "#9fe5e1", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+          fontSize: "18px", fontStyle: "bold", letterSpacing: 1
+        }));
+        this.entryLayer.add(this.add.text(x, y + 24, station.card[key], {
+          color: "#e5e9f2", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+          fontSize: "18px", lineSpacing: 3, wordWrap: { width }
+        }));
+      });
+      this.entryLayer.add(this.add.text(105, 548, lunar.cardLabels.source, {
+        color: "#9fe5e1", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", fontStyle: "bold"
+      }));
+      const sourceLink = this.add.text(105, 574, station.card.source, {
+        color: "#f3d9a6", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", wordWrap: { width: 1020 }
+      }).setInteractive({ useHandCursor: true });
+      sourceLink.on("pointerdown", () => window.open(station.card.source, "_blank", "noopener"));
+      this.entryLayer.add(sourceLink);
+      if (entries.length > 1) {
+        this.addJournalNavigation(-1, data.text.journalPrevious, 130);
+        this.addJournalNavigation(1, data.text.journalNext, 1150);
+      }
+    }
+
+    addJournalNavigation(direction, label, x) {
+      const button = this.add.rectangle(x, 658, 190, 48, 0x243450, 0.98)
+        .setStrokeStyle(2, 0xb9d8e4, 0.9)
+        .setInteractive({ useHandCursor: true });
+      const buttonText = this.add.text(x, 658, label, {
+        color: "#f6f1e7", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", fontStyle: "bold", align: "center"
+      }).setOrigin(0.5);
+      button.on("pointerdown", () => this.changeEntry(direction));
+      this.entryLayer.add([button, buttonText]);
+    }
+
+    changeEntry(direction) {
+      this.selectedIndex += direction;
+      this.renderEntry();
+    }
+
+    toggleLanguage() {
+      applyLanguage(data.language === "en" ? "es" : "en");
+      this.scene.restart({ selectedIndex: this.selectedIndex });
     }
   }
 
@@ -164,7 +443,8 @@
         w: Phaser.Input.Keyboard.KeyCodes.W,
         space: Phaser.Input.Keyboard.KeyCodes.SPACE,
         interact: Phaser.Input.Keyboard.KeyCodes.E,
-        enter: Phaser.Input.Keyboard.KeyCodes.ENTER
+        enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
+        language: Phaser.Input.Keyboard.KeyCodes.L
       });
       this.jumpKeys = [this.keys.up, this.keys.w, this.keys.space];
       this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
@@ -198,6 +478,10 @@
       this.updateStats();
       this.input.keyboard.on("keydown-ESC", () => this.scene.start("MenuScene"));
       this.input.keyboard.on("keydown-R", () => this.scene.restart());
+      if (!introShown) {
+        introShown = true;
+        this.startDialogue("intro");
+      }
     }
 
     createCourse() {
@@ -283,6 +567,7 @@
         alsep: [art.alsep, 216, 171],
         surveyor: [art.surveyor, 190, 174]
       };
+      this.stationLabels = {};
       this.lunarStations = lunar.stations.map((station) => {
         const [texture, width, height] = machineArt[station.id];
         this.add.ellipse(station.x, this.parkour.groundY + 9, width * 0.9, 22, 0x10182c, 0.34)
@@ -295,7 +580,7 @@
         this.add.image(station.x, station.y, texture)
           .setDisplaySize(width, height)
           .setDepth(2);
-        this.add.text(station.x, station.y - height / 2 - 30, station.title, {
+        this.stationLabels[station.id] = this.add.text(station.x, station.y - height / 2 - 30, station.title, {
           color: "#fff1ce",
           fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
           fontSize: "18px",
@@ -303,7 +588,12 @@
           stroke: "#202944",
           strokeThickness: 4
         }).setOrigin(0.5).setDepth(3);
-        return { ...station, completed: false };
+        return {
+          ...station,
+          completed: journalIds.includes(station.id),
+          dialogueSeen: false,
+          journalSaved: journalIds.includes(station.id)
+        };
       });
 
       [
@@ -334,7 +624,7 @@
     }
 
     updateNearbyStation() {
-      if (this.missionCardOpen || this.lrvDriving || this.alsepActive || this.surveyorActive) return;
+      if (this.dialogueOpen || this.missionCardOpen || this.lrvDriving || this.alsepActive || this.surveyorActive) return;
       const station = this.lunarStations.find((candidate) => {
         if (candidate.completed) return false;
         const distance = Phaser.Math.Distance.Between(
@@ -354,6 +644,10 @@
         this.closeMissionCard();
         return;
       }
+      if (this.dialogueOpen) {
+        this.advanceDialogue();
+        return;
+      }
       if (this.lrvDriving || this.alsepActive) return;
 
       if (this.surveyorActive) {
@@ -365,6 +659,11 @@
 
       const station = this.nearStation;
       if (!station || station.completed) return;
+      if (!station.dialogueSeen) {
+        station.dialogueSeen = true;
+        this.startDialogue(station.id);
+        return;
+      }
       if (station.id === "lm") {
         const atPlaque = Phaser.Math.Distance.Between(
           this.player.x, this.player.y, station.plaqueX, station.plaqueY
@@ -507,6 +806,7 @@
       if (!station || station.completed) return;
       if (station.id === "lrv") this.endLrvTrial();
       station.completed = true;
+      station.journalSaved = saveJournalEntry(station.id);
       if (station.id === "surveyor") this.surveyorActive = false;
       this.updateStats();
       this.showMissionCard(station);
@@ -526,12 +826,15 @@
     }
 
     showMissionCard(station) {
+      this.missionCardStationId = station.id;
       this.missionCardOpen = true;
       this.nearStation = null;
       this.player.body.setVelocity(0, 0);
       this.player.body.setAccelerationX(0);
       this.player.body.setAllowGravity(false);
-      this.statusText.setText(lunar.challenge.stationRecovered);
+      this.statusText.setText(station.journalSaved === false
+        ? data.text.journalStorageError
+        : lunar.challenge.stationRecovered);
 
       const layer = this.add.container(0, 0).setScrollFactor(0).setDepth(30);
       this.missionCardLayer = layer;
@@ -587,6 +890,7 @@
       this.missionCardOpen = false;
       this.missionCardLayer.destroy(true);
       this.missionCardLayer = null;
+      this.missionCardStationId = null;
       this.player.body.setAllowGravity(true);
       this.statusText.setText(
         this.lunarStations.every((station) => station.completed)
@@ -696,10 +1000,10 @@
         stroke: "#10172a",
         strokeThickness: 4
       };
-      this.add.text(28, 20, data.text.expeditionLabel, {
+      this.expeditionLabelText = this.add.text(28, 20, data.text.expeditionLabel, {
         ...fixedText, color: "#f0cd98", fontSize: "18px", letterSpacing: 2
       }).setScrollFactor(0).setDepth(10);
-      this.add.text(28, 49, lunar.title, {
+      this.worldTitleText = this.add.text(28, 49, lunar.title, {
         ...fixedText, fontFamily: "Georgia, Times New Roman, serif", fontSize: "30px"
       }).setScrollFactor(0).setDepth(10);
       this.statusText = this.add.text(28, 89, lunar.hint, {
@@ -711,6 +1015,16 @@
       this.helpText = this.add.text(640, 675, data.text.parkourStart, {
         ...fixedText, align: "center", fontSize: "18px", color: "#f1f0eb"
       }).setOrigin(0.5).setScrollFactor(0).setDepth(10);
+      this.languageButton = this.add.rectangle(1110, 34, 300, 44, 0x18223c, 0.96)
+        .setStrokeStyle(2, 0x8fa9c8, 0.9)
+        .setScrollFactor(0)
+        .setDepth(12)
+        .setInteractive({ useHandCursor: true });
+      this.languageButtonLabel = this.add.text(1110, 34, data.text.languageButton, {
+        color: "#fff1ce", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", fontStyle: "bold"
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(12);
+      this.languageButton.on("pointerdown", () => this.toggleLanguage());
       this.rhythmPanel = this.add.container(0, 0).setScrollFactor(0).setDepth(12).setVisible(false);
       this.rhythmPanel.add(this.add.rectangle(640, 465, 580, 112, 0x111a31, 0.94)
         .setStrokeStyle(2, 0xb9d8e4, 0.88));
@@ -726,6 +1040,132 @@
       this.rhythmPointer = this.add.circle(470, 480, 9, 0x95e3e1, 1)
         .setStrokeStyle(2, 0xf4ffff, 1);
       this.rhythmPanel.add(this.rhythmPointer);
+
+      this.dialoguePanel = this.add.container(0, 0).setScrollFactor(0).setDepth(20).setVisible(false);
+      this.dialoguePanel.add(this.add.rectangle(640, 566, 1120, 152, 0x10182c, 0.97)
+        .setStrokeStyle(3, 0xe7c89b, 0.95));
+      this.dialoguePanel.add(this.add.rectangle(640, 566, 1098, 130, 0x192641, 0.98)
+        .setStrokeStyle(1, 0x8298b1, 0.7));
+      this.dialogueSpeakerText = this.add.text(104, 512, "", {
+        color: "#f0cd98", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "20px", fontStyle: "bold", letterSpacing: 1
+      });
+      this.dialogueText = this.add.text(104, 546, "", {
+        color: "#fff8ec", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "22px", lineSpacing: 4, wordWrap: { width: 1040 }
+      });
+      this.dialogueContinueText = this.add.text(1172, 622, data.text.dialogueContinue, {
+        color: "#b9d8e4", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", fontStyle: "bold", align: "right"
+      }).setOrigin(1, 0);
+      this.dialoguePanel.add([
+        this.dialogueSpeakerText,
+        this.dialogueText,
+        this.dialogueContinueText
+      ]);
+    }
+
+    startDialogue(dialogueId) {
+      this.dialogueId = dialogueId;
+      this.dialogueLines = lunar.dialogues[dialogueId];
+      this.dialogueIndex = 0;
+      this.dialogueOpen = true;
+      this.player.body.setVelocity(0, 0);
+      this.player.body.setAccelerationX(0);
+      this.player.body.setAllowGravity(false);
+      this.jumpBufferTimer = 0;
+      this.dialoguePanel.setVisible(true);
+      this.showDialogueLine();
+    }
+
+    showDialogueLine() {
+      const line = this.dialogueLines[this.dialogueIndex];
+      if (this.dialogueEvent) this.dialogueEvent.remove(false);
+      this.dialogueSpeakerText.setText(line.speaker);
+      this.dialogueText.setText("");
+      this.dialogueContinueText.setText(data.text.dialogueContinue);
+      this.dialogueIndexChar = 0;
+      this.dialogueReady = false;
+      this.dialogueEvent = this.time.addEvent({
+        delay: 28,
+        repeat: Math.max(0, line.text.length - 1),
+        callback: () => {
+          this.dialogueIndexChar += 1;
+          this.dialogueText.setText(line.text.slice(0, this.dialogueIndexChar));
+          if (this.dialogueIndexChar >= line.text.length) this.dialogueReady = true;
+        }
+      });
+    }
+
+    advanceDialogue() {
+      if (!this.dialogueReady) {
+        if (this.dialogueEvent) this.dialogueEvent.remove(false);
+        const line = this.dialogueLines[this.dialogueIndex];
+        this.dialogueText.setText(line.text);
+        this.dialogueReady = true;
+        return;
+      }
+      this.dialogueIndex += 1;
+      if (this.dialogueIndex >= this.dialogueLines.length) {
+        this.dialogueOpen = false;
+        this.dialoguePanel.setVisible(false);
+        this.player.body.setAllowGravity(true);
+        this.updateNearbyStation();
+        return;
+      }
+      this.showDialogueLine();
+    }
+
+    toggleLanguage() {
+      const languageSaved = applyLanguage(data.language === "en" ? "es" : "en");
+      this.refreshLanguage();
+      if (!languageSaved) this.statusText.setText(data.text.languageStorageError);
+    }
+
+    refreshLanguage() {
+      const nearbyId = this.nearStation && this.nearStation.id;
+      const cardId = this.missionCardStationId;
+      this.lunarStations.forEach((station) => {
+        const localized = lunar.stations.find((entry) => entry.id === station.id);
+        station.title = localized.title;
+        station.card = localized.card;
+        this.stationLabels[station.id].setText(station.title);
+      });
+      this.nearStation = nearbyId ? this.getStation(nearbyId) : null;
+      this.expeditionLabelText.setText(data.text.expeditionLabel);
+      this.worldTitleText.setText(lunar.title);
+      this.helpText.setText(data.text.parkourStart);
+      this.languageButtonLabel.setText(data.text.languageButton);
+      this.dialogueContinueText.setText(data.text.dialogueContinue);
+      this.updateStats();
+
+      if (this.dialogueOpen) {
+        this.dialogueLines = lunar.dialogues[this.dialogueId];
+        this.showDialogueLine();
+      }
+      if (this.lrvDriving) {
+        this.statusText.setText(lunar.challenge.lrvDrive);
+      } else if (this.alsepActive) {
+        this.statusText.setText(lunar.challenge.alsepListen);
+        this.rhythmText.setText(this.alsepHits
+          ? lunar.challenge.alsepProgress
+            .replace("{current}", String(this.alsepHits))
+            .replace("{total}", String(lunar.settings.alsepRequiredPulses))
+          : lunar.challenge.alsepListen);
+      } else if (this.surveyorActive) {
+        this.statusText.setText(this.surveyorNightReady
+          ? lunar.challenge.surveyorNight
+          : lunar.challenge.surveyorLand);
+      } else if (this.nearStation) {
+        this.statusText.setText(`${this.nearStation.title} — ${lunar.interactionHint}`);
+      } else {
+        this.statusText.setText(lunar.hint);
+      }
+
+      if (this.missionCardOpen) {
+        this.missionCardLayer.destroy(true);
+        this.showMissionCard(this.getStation(cardId));
+      }
     }
 
     createParticles() {
@@ -937,6 +1377,17 @@
       const jumpHeld = this.jumpKeys.some((key) => key.isDown);
       const interactPressed = Phaser.Input.Keyboard.JustDown(this.keys.interact)
         || Phaser.Input.Keyboard.JustDown(this.keys.enter);
+      const languagePressed = Phaser.Input.Keyboard.JustDown(this.keys.language);
+
+      if (languagePressed) {
+        this.toggleLanguage();
+        return;
+      }
+
+      if (this.dialogueOpen) {
+        if (interactPressed) this.advanceDialogue();
+        return;
+      }
 
       if (this.missionCardOpen) {
         if (interactPressed) this.closeMissionCard();
@@ -1067,6 +1518,7 @@
     BootScene,
     LoadingScene,
     MenuScene,
+    JournalScene,
     ExpeditionScene
   };
   const config = {
