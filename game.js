@@ -649,6 +649,7 @@
       }).setOrigin(0.5);
       this.addPauseButton(data.text.pauseRestart, 400, () => this.restartExpedition());
       this.addPauseButton(data.text.pauseMenu, 475, () => this.returnToMenu());
+      this.helpButtonLabel = this.addPauseButton(this.getHelpModeLabel(), 550, () => this.toggleHelpMode());
 
       this.languageButton = this.add.rectangle(1150, 42, 200, 40, 0x10213e, 0.34)
         .setStrokeStyle(2, 0x72e9ff, 0.54)
@@ -680,6 +681,7 @@
       button.on("pointerout", () => button.setFillStyle(0x153d59, 0.36));
       button.on("pointerdown", callback);
       buttonLabel.setInteractive({ useHandCursor: true }).on("pointerdown", callback);
+      return buttonLabel;
     }
 
     update() {
@@ -696,8 +698,27 @@
     }
 
     restartExpedition() {
+      const expedition = this.scene.get("ExpeditionScene");
+      const helpModeEnabled = Boolean(expedition && expedition.helpModeEnabled);
       this.scene.stop("ExpeditionScene");
-      this.scene.start("ExpeditionScene", { worldId: this.worldId });
+      this.scene.start("ExpeditionScene", { worldId: this.worldId, helpModeEnabled });
+    }
+
+    getHelpModeLabel() {
+      const expedition = this.scene.get("ExpeditionScene");
+      const state = expedition && expedition.helpModeEnabled
+        ? data.text.pauseHelpOn : data.text.pauseHelpOff;
+      return data.text.pauseHelpMode.replace("{state}", state);
+    }
+
+    toggleHelpMode() {
+      const expedition = this.scene.get("ExpeditionScene");
+      if (!expedition || typeof expedition.setHelpMode !== "function") {
+        console.error("Could not change help mode because the expedition scene is unavailable.");
+        return;
+      }
+      expedition.setHelpMode(!expedition.helpModeEnabled);
+      this.helpButtonLabel.setText(this.getHelpModeLabel());
     }
 
     returnToMenu() {
@@ -881,10 +902,12 @@
       }
       lunar = worldData(selectedWorldId);
       this.worldId = selectedWorldId;
+      this.helpModeEnabled = Boolean(sceneData && sceneData.helpModeEnabled);
     }
 
     create() {
       this.parkour = data.config.parkour;
+      this.attempts = 1;
       this.physics.world.gravity.y = this.parkour.gravity;
       this.physics.world.setBounds(0, 0, this.parkour.worldWidth, this.parkour.rescueY);
       this.cameras.main.setBounds(0, 0, this.parkour.worldWidth, 720);
@@ -980,6 +1003,8 @@
       this.inWind = false;
       this.inCurrent = false;
       this.echoStars = 0;
+      this.checkpointEchoIds = new Set();
+      this.checkpointEchoCount = 0;
       this.batteries = 3;
       this.checkpointX = 90;
       this.checkpointY = 530;
@@ -1001,7 +1026,10 @@
       this.inLrvLowGravity = false;
       this.voyagerFinaleOpen = false;
       this.updateStats();
-      this.input.keyboard.on("keydown-R", () => this.scene.restart());
+      this.input.keyboard.on("keydown-R", () => this.scene.restart({
+        worldId: this.worldId,
+        helpModeEnabled: this.helpModeEnabled
+      }));
       this.input.addPointer(2);
       this.input.on("pointerup", (pointer) => this.releaseTouchPointer(pointer.id));
       this.input.on("pointerupoutside", (pointer) => this.releaseTouchPointer(pointer.id));
@@ -1020,16 +1048,24 @@
       this.movingPlatforms = this.physics.add.group({ allowGravity: false, immovable: true });
       this.springs = this.physics.add.staticGroup();
       this.echoes = this.physics.add.staticGroup();
+      this.echoSequence = 0;
 
-      const groundSections = [
-        [0, 1050], [1190, 2130], [2260, 3370], [3490, worldWidth - 3490]
+      const pitSections = [
+        [820, 940], [1050, 1190], [1360, 1480],
+        [2130, 2260], [2500, 2630], [3370, 3490], [3800, 3940]
       ];
-      groundSections.forEach(([x, width]) => {
+      const addGroundSection = (x, width) => {
         const ledge = this.ground.create(x + width / 2, this.parkour.groundY + 28, this.platformTexture);
         ledge.setDisplaySize(width, 92).refreshBody();
         this.add.ellipse(x + width / 2, this.parkour.groundY + 16, width * 0.92, 24,
           this.worldId === "mars" ? 0x4b2a34 : 0x11182a, 0.38);
+      };
+      let groundStart = 0;
+      pitSections.forEach(([pitStart, pitEnd]) => {
+        if (pitStart > groundStart) addGroundSection(groundStart, pitStart - groundStart);
+        groundStart = pitEnd;
       });
+      if (groundStart < worldWidth) addGroundSection(groundStart, worldWidth - groundStart);
 
       [
         [330, 510, 210], [590, 430, 180], [870, 520, 190],
@@ -1071,12 +1107,23 @@
           this.addZone(3650, 340, 620, 480, 0x81d9e3, 0.08)]
         : [];
 
-      this.checkpoint = this.physics.add.staticImage(2300, 542, art.signal)
-        .setDisplaySize(36, 36);
-      this.add.text(2300, 500, data.text.parkourCheckpoint, {
-        color: "#f7e4ba", fontSize: "18px", fontStyle: "bold",
-        fontFamily: "Trebuchet MS, Segoe UI, sans-serif"
-      }).setOrigin(0.5);
+      this.checkpointMarkers = [
+        { x: 950, help: true }, { x: 1200 }, { x: 1850, help: true },
+        { x: 2300 }, { x: 2950, help: true }, { x: 3500 }, { x: 4100, help: true }
+      ].map(({ x, help }) => {
+        const marker = this.physics.add.staticImage(x, 542, art.signal)
+          .setDisplaySize(36, 36)
+          .setVisible(!help || this.helpModeEnabled);
+        marker.checkpointX = x;
+        marker.isHelpCheckpoint = Boolean(help);
+        marker.body.enable = !help || this.helpModeEnabled;
+        marker.helpLabel = this.add.text(x, 500, data.text.parkourCheckpoint, {
+          color: "#f7e4ba", fontSize: "18px", fontStyle: "bold",
+          fontFamily: "Trebuchet MS, Segoe UI, sans-serif"
+        }).setOrigin(0.5).setVisible(!help || this.helpModeEnabled);
+        this.physics.add.overlap(this.player, marker, this.saveCheckpoint, null, this);
+        return marker;
+      });
       this.goal = this.physics.add.staticImage(worldWidth - 115, 500, art.signal)
         .setDisplaySize(66, 66);
       this.add.text(worldWidth - 115, 438, data.text.parkourGoal, {
@@ -1099,7 +1146,6 @@
       this.currentZones.forEach((zone) => {
         this.physics.add.overlap(this.player, zone, () => { this.inCurrent = true; });
       });
-      this.physics.add.overlap(this.player, this.checkpoint, this.saveCheckpoint, null, this);
       this.physics.add.overlap(this.player, this.goal, this.finishCourse, null, this);
 
       this.cameras.main.setRoundPixels(true);
@@ -2130,6 +2176,8 @@
     addEcho(x, y) {
       const echo = this.echoes.create(x, y, art.echo);
       echo.setDisplaySize(28, 28).refreshBody();
+      echo.echoId = this.echoSequence++;
+      echo.collected = false;
       this.tweens.add({ targets: echo, y: y - 11, duration: 850, yoyo: true, repeat: -1, ease: "Sine.inOut" });
       return echo;
     }
@@ -2188,7 +2236,7 @@
       };
       const worldAccent = this.worldId === "mars" ? 0xff8a50
         : this.worldId === "deep" ? 0xe279ff : 0x64e6ff;
-      this.add.rectangle(420, 88, 790, 136, 0x09152e, 0.34)
+      this.add.rectangle(420, 92, 790, 160, 0x09152e, 0.34)
         .setStrokeStyle(2, worldAccent, 0.5)
         .setScrollFactor(0)
         .setDepth(8);
@@ -2213,6 +2261,18 @@
           : this.worldId === "deep" ? "#f09bff" : "#91f5ff",
         fontSize: "18px"
       }).setScrollFactor(0).setDepth(10);
+      this.progressText = this.add.text(28, 148, "", {
+        ...fixedText, fontSize: "18px", color: "#f6dfaa"
+      }).setScrollFactor(0).setDepth(10);
+      this.progressBarWidth = 340;
+      this.add.rectangle(615, 157, this.progressBarWidth, 12, 0x29354f, 0.76)
+        .setStrokeStyle(1, worldAccent, 0.5)
+        .setScrollFactor(0)
+        .setDepth(10);
+      this.progressFill = this.add.rectangle(445, 157, 1, 7, worldAccent, 0.92)
+        .setOrigin(0, 0.5)
+        .setScrollFactor(0)
+        .setDepth(11);
       this.helpText = this.add.text(640, 680, data.text.touchControlsHint, {
         ...fixedText, align: "center", fontSize: "18px", color: "#f1f0eb",
         wordWrap: { width: 1160 }
@@ -2424,6 +2484,9 @@
         station.card = localized.card;
         this.stationLabels[station.id].setText(station.title);
       });
+      this.checkpointMarkers.forEach((marker) => {
+        marker.helpLabel.setText(data.text.parkourCheckpoint);
+      });
       this.nearStation = nearbyId ? this.getStation(nearbyId) : null;
       this.expeditionLabelText.setText(this.worldId === "mars"
         ? data.text.marsExpeditionLabel
@@ -2595,19 +2658,57 @@
     }
 
     collectEcho(player, echo) {
-      echo.destroy();
+      if (echo.collected) return;
+      echo.collected = true;
+      echo.body.enable = false;
+      echo.setActive(false).setVisible(false);
       this.echoStars += 1;
       this.sparkles.emitParticleAt(player.x, player.y, 14);
       this.updateStats();
     }
 
-    saveCheckpoint() {
-      if (this.checkpointX !== 2300) {
-        this.checkpointX = 2300;
-        this.checkpointY = 510;
-        this.checkpoint.setTint(0xb5f2e7);
-        this.showStatus(data.text.parkourCheckpoint);
-      }
+    setHelpMode(enabled) {
+      this.helpModeEnabled = Boolean(enabled);
+      this.checkpointMarkers.forEach((marker) => {
+        if (!marker.isHelpCheckpoint) return;
+        const visible = this.helpModeEnabled;
+        marker.setVisible(visible);
+        marker.body.enable = visible;
+        marker.helpLabel.setVisible(visible);
+      });
+    }
+
+    saveCheckpoint(player, marker) {
+      if ((marker.isHelpCheckpoint && !this.helpModeEnabled)
+        || marker.checkpointX <= this.checkpointX) return;
+
+      this.checkpointX = marker.checkpointX;
+      this.checkpointY = 510;
+      marker.setTint(0xb5f2e7);
+      this.checkpointMarkers.forEach((checkpointMarker) => {
+        if (checkpointMarker.checkpointX <= this.checkpointX) {
+          checkpointMarker.setTint(0xb5f2e7);
+        }
+      });
+      this.checkpointEchoIds = new Set(
+        this.echoes.getChildren().filter((echo) => echo.collected).map((echo) => echo.echoId)
+      );
+      this.checkpointEchoCount = this.checkpointEchoIds.size;
+      this.updateStats();
+      this.cameras.main.flash(140, 180, 246, 222);
+      this.sparkles.emitParticleAt(this.checkpointX, this.checkpointY, 12);
+      this.showStatus(data.text.parkourCheckpoint);
+    }
+
+    restoreCheckpointEchoes() {
+      this.echoes.getChildren().forEach((echo) => {
+        const collected = this.checkpointEchoIds.has(echo.echoId);
+        echo.collected = collected;
+        echo.setActive(!collected).setVisible(!collected);
+        echo.body.enable = !collected;
+        if (!collected) echo.refreshBody();
+      });
+      this.echoStars = this.checkpointEchoCount;
     }
 
     finishCourse() {
@@ -2622,6 +2723,7 @@
       this.player.body.setVelocity(0, 0);
       this.showStatus(data.text.parkourFinish);
       this.sparkles.emitParticleAt(this.goal.x, this.goal.y, 36);
+      this.updateRouteProgress();
     }
 
     showStatus(message) {
@@ -2637,18 +2739,43 @@
       this.statsText.setText(
         `${data.text.parkourStars}: ${this.echoStars}     ${data.text.parkourBatteries}: ${"●".repeat(this.batteries)}${"○".repeat(3 - this.batteries)}     ${lunar.progressLabel}: ${missions}/${this.stations.length}`
       );
+      this.updateRouteProgress();
+    }
+
+    updateRouteProgress() {
+      if (!this.progressText || !this.progressFill || !this.player) return;
+      const routeEnd = this.goal ? this.goal.x : this.parkour.worldWidth - 115;
+      const progress = this.completed ? 1
+        : Phaser.Math.Clamp((this.player.x - 90) / (routeEnd - 90), 0, 1);
+      this.progressText.setText(data.text.parkourProgress
+        .replace("{percent}", String(Math.round(progress * 100)))
+        .replace("{attempts}", String(this.attempts)));
+      this.progressFill.setDisplaySize(Math.max(1, this.progressBarWidth * progress), 7);
     }
 
     rescuePlayer() {
+      this.attempts += 1;
       this.batteries = Math.max(0, this.batteries - 1);
+      this.restoreCheckpointEchoes();
+      this.clearTouchInputs();
+      this.nearStation = null;
+      this.coyoteTimer = 0;
+      this.jumpBufferTimer = 0;
+      this.airJumps = 1;
+      this.wasGrounded = false;
+      this.inLowGravity = false;
+      this.inWind = false;
+      this.inCurrent = false;
+      this.player.setActive(true).setVisible(true);
       this.updateStats();
       this.player.setPosition(this.checkpointX, this.checkpointY);
       this.player.body.reset(this.checkpointX, this.checkpointY);
-      this.player.body.setVelocity(0, 0);
-      this.airJumps = 1;
+      this.player.body.setVelocity(0, 0).setAcceleration(0, 0).setAllowGravity(true);
       this.playerCelebrateUntil = this.time.now + 600;
       this.tuercaCelebrateUntil = this.time.now + 750;
-      this.showStatus(data.text.parkourRescue);
+      this.cameras.main.flash(180, 255, 213, 176);
+      this.cameras.main.shake(100, 0.0015);
+      this.showStatus(`${data.text.parkourTryAgain} ${data.text.parkourRescue}`);
       this.sparkles.emitParticleAt(this.checkpointX, this.checkpointY, 12);
     }
 
@@ -2715,6 +2842,7 @@
         });
       }
       if (!this.player) return;
+      this.updateRouteProgress();
       if (this.completed) {
         if (Phaser.Input.Keyboard.JustDown(this.keys.escape)) this.scene.start("MenuScene");
         return;
