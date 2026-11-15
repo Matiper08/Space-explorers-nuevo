@@ -138,7 +138,7 @@ window.SpaceData = {
     pageTitle: "Space Explorers",
     pageDescription: "A gentle journey to the stories of robotic explorers.",
     dialogueContinue: "TAP OR PRESS E / ENTER TO CONTINUE",
-    dialogueIntro: "The Moon is quiet, Maia. Listen with care; every machine has a story.",
+    dialogueIntro: "The Moon is quiet, Maia. Listen carefully; every machine has a story.",
     dialogueIntroReply: "I'm ready, Grandma. Tuerca and I will follow each signal.",
     worldButton: "CHOOSE WORLD: {world} — OPEN SYSTEM MAP",
     worldMoon: "THE MOON",
