@@ -817,12 +817,168 @@
 
     selectWorld(worldId) {
       selectedWorldId = worldId;
-      this.scene.start("MenuScene");
+      this.scene.start("WorldTravelScene", { worldId });
     }
 
     toggleLanguage() {
       applyLanguage(data.language === "en" ? "es" : "en");
       this.scene.restart();
+    }
+  }
+
+  class WorldTravelScene extends Phaser.Scene {
+    constructor() {
+      super("WorldTravelScene");
+    }
+
+    init(sceneData) {
+      this.worldId = sceneData && ["moon", "mars", "deep"].includes(sceneData.worldId)
+        ? sceneData.worldId : selectedWorldId;
+      selectedWorldId = this.worldId;
+    }
+
+    create() {
+      const palette = this.worldId === "mars"
+        ? { accent: 0xff9b62, sky: 0xb57668, nebula: 0xc36d5f }
+        : this.worldId === "deep"
+          ? { accent: 0xdca0ff, sky: 0x9c83d6, nebula: 0xb079da }
+          : { accent: 0x8de8ff, sky: 0x91add2, nebula: 0x729dd1 };
+      this.cameras.main.setBackgroundColor("#050a18");
+      this.add.image(640, 360, art.deepSky).setDisplaySize(1280, 720)
+        .setTint(palette.sky).setAlpha(0.9).setDepth(-10);
+      const nebula = this.add.tileSprite(640, 360, 1280, 720, art.deepFarRidge)
+        .setTint(palette.nebula).setAlpha(0.42).setDepth(-9);
+      const starsFar = this.add.tileSprite(640, 360, 1280, 720, art.deepDust)
+        .setTint(palette.accent).setAlpha(0.48).setDepth(-8);
+      const aurora = this.add.tileSprite(640, 360, 1280, 720, art.deepAurora)
+        .setTint(palette.accent).setAlpha(this.worldId === "deep" ? 0.52 : 0.22).setDepth(-7);
+      this.parallaxLayers = [
+        { sprite: nebula, speed: 4 },
+        { sprite: starsFar, speed: 11 },
+        { sprite: aurora, speed: 19 }
+      ];
+
+      this.stars = [];
+      for (let index = 0; index < 72; index += 1) {
+        const layer = index % 3;
+        const star = this.add.circle(
+          (index * 173 + 61) % 1280,
+          (index * 97 + 37) % 720,
+          layer === 0 ? 1 : layer === 1 ? 1.5 : 2,
+          layer === 2 ? 0xf7e8ce : 0xd4e8ff,
+          0.45 + layer * 0.14
+        ).setDepth(-6);
+        this.stars.push({ star, speed: 8 + layer * 9 });
+      }
+
+      const earthGlow = this.add.circle(155, 360, 112, 0x70dcff, 0.12)
+        .setStrokeStyle(2, 0x9deaff, 0.32).setDepth(-2);
+      const earth = this.add.image(155, 360, art.travelEarth)
+        .setDisplaySize(170, 170).setDepth(-1);
+      this.tweens.add({
+        targets: earthGlow, alpha: 0.22, scale: 1.12,
+        duration: 1300, yoyo: true, repeat: -1, ease: "Sine.inOut"
+      });
+      this.add.text(155, 468, data.text.travelEarthLabel, {
+        color: "#d8efff", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", fontStyle: "bold", letterSpacing: 2, align: "center"
+      }).setOrigin(0.5).setDepth(2);
+
+      const destination = this.worldId === "moon"
+        ? art.travelMoon : this.worldId === "mars" ? art.travelMars : art.deepRingedPlanet;
+      const destinationSize = this.worldId === "deep" ? [300, 218] : [196, 196];
+      this.destinationGlow = this.add.circle(1092, 356, 138, palette.accent, 0.12)
+        .setStrokeStyle(2, palette.accent, 0.42).setDepth(-2);
+      this.destination = this.add.image(1092, 356, destination)
+        .setDisplaySize(destinationSize[0], destinationSize[1]).setDepth(-1);
+      this.tweens.add({
+        targets: this.destinationGlow, alpha: 0.24, scale: 1.1,
+        duration: 1100, yoyo: true, repeat: -1, ease: "Sine.inOut"
+      });
+      const destinationName = this.worldId === "moon" ? data.text.worldMoon
+        : this.worldId === "mars" ? data.text.worldMars : data.text.worldDeep;
+      this.add.text(1092, 478, destinationName, {
+        color: "#fff1d2", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", fontStyle: "bold", letterSpacing: 2, align: "center",
+        wordWrap: { width: 280 }
+      }).setOrigin(0.5).setDepth(2);
+
+      const route = this.add.graphics().setDepth(-3);
+      route.lineStyle(2, palette.accent, 0.48);
+      for (let x = 255; x < 1000; x += 38) {
+        route.lineBetween(x, 360, x + 17, 360);
+      }
+
+      this.ship = this.add.container(265, 360).setDepth(4);
+      this.ship.add([
+        this.add.image(-24, -18, art.maiaIdle).setDisplaySize(56, 66),
+        this.add.image(31, -17, art.tuercaIdle).setDisplaySize(46, 46),
+        this.add.image(0, 0, art.laCometa).setDisplaySize(500, 270)
+      ]);
+      this.engineGlow = this.add.circle(0, 360, 26, palette.accent, 0.62)
+        .setDepth(3);
+
+      this.add.text(640, 42, data.text.travelShipName, {
+        color: "#fff8ec", fontFamily: "Georgia, Times New Roman, serif",
+        fontSize: "28px", fontStyle: "bold", letterSpacing: 4, align: "center",
+        stroke: "#10172a", strokeThickness: 4
+      }).setOrigin(0.5).setDepth(5);
+      this.dialogueText = this.add.text(640, 574, data.text.travelDialogue[this.worldId], {
+        color: "#fff8ec", fontFamily: "Georgia, Times New Roman, serif",
+        fontSize: "24px", align: "center", wordWrap: { width: 990 }
+      }).setOrigin(0.5).setAlpha(0).setDepth(6);
+      this.add.rectangle(640, 574, 1040, 80, 0x09152e, 0.35)
+        .setStrokeStyle(2, palette.accent, 0.42).setDepth(5);
+      this.dialogueText.setDepth(6);
+      this.arrivalText = this.add.text(640, 510, data.text.travelArrival
+        .replace("{world}", destinationName), {
+        color: "#f6dfaa", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "20px", fontStyle: "bold", letterSpacing: 2, align: "center"
+      }).setOrigin(0.5).setAlpha(0).setDepth(6);
+      this.add.text(640, 680, data.text.travelSkipHint, {
+        color: "#d8ddeb", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", fontStyle: "bold", letterSpacing: 2, align: "center"
+      }).setOrigin(0.5).setDepth(6);
+
+      this.travelFinished = false;
+      this.skipEnabledAt = this.time.now + 180;
+      this.skipHandler = () => {
+        if (this.time.now >= this.skipEnabledAt) this.finishTravel();
+      };
+      this.input.keyboard.on("keydown", this.skipHandler);
+      this.input.on("pointerdown", this.skipHandler);
+      this.time.delayedCall(450, () => this.tweens.add({
+        targets: this.dialogueText, alpha: 1, duration: 450, ease: "Sine.out"
+      }));
+      this.time.delayedCall(3850, () => this.tweens.add({
+        targets: this.arrivalText, alpha: 1, duration: 450, ease: "Sine.out"
+      }));
+      this.tweens.add({
+        targets: this.ship, x: 900, duration: 4800, ease: "Sine.inOut"
+      });
+      this.time.delayedCall(4800, () => this.finishTravel());
+    }
+
+    update(time, delta) {
+      const dt = Math.min(delta / 1000, 0.05);
+      this.parallaxLayers.forEach(({ sprite, speed }) => {
+        sprite.tilePositionX += speed * dt;
+      });
+      this.stars.forEach(({ star, speed }) => {
+        star.x -= speed * dt;
+        if (star.x < -2) star.x = 1282;
+      });
+      this.ship.y = 360 + Math.sin(time * 0.0025) * 7;
+      this.engineGlow.setPosition(this.ship.x - 249, this.ship.y)
+        .setAlpha(0.45 + (Math.sin(time * 0.012) + 1) * 0.12);
+    }
+
+    finishTravel() {
+      if (this.travelFinished) return;
+      this.travelFinished = true;
+      this.input.keyboard.off("keydown", this.skipHandler);
+      this.input.off("pointerdown", this.skipHandler);
+      this.scene.start("ExpeditionScene", { worldId: this.worldId });
     }
   }
 
@@ -3444,6 +3600,7 @@
     OpeningScene,
     MenuScene,
     SystemMapScene,
+    WorldTravelScene,
     CreditsScene,
     JournalScene,
     PauseScene,

@@ -69,7 +69,11 @@ window.SpaceArt = {
     deepGasGiant: "deep-gas-giant",
     deepRingedPlanet: "deep-ringed-planet",
     deepEarthDot: "deep-pale-blue-dot",
-    deepStar: "deep-transit-star"
+    deepStar: "deep-transit-star",
+    laCometa: "la-cometa-spacecraft",
+    travelEarth: "travel-earth",
+    travelMoon: "travel-moon",
+    travelMars: "travel-mars"
   },
 
   createTextures(scene) {
@@ -164,6 +168,10 @@ window.SpaceArt = {
     this.createCanvas(scene, keys.deepRingedPlanet, 360, 260, this.drawDeepRingedPlanet);
     this.createCanvas(scene, keys.deepEarthDot, 72, 72, this.drawDeepEarthDot);
     this.createCanvas(scene, keys.deepStar, 150, 150, this.drawDeepStar);
+    this.createCanvas(scene, keys.laCometa, 500, 270, this.drawLaCometa);
+    this.createCanvas(scene, keys.travelEarth, 190, 190, this.drawTravelEarth);
+    this.createCanvas(scene, keys.travelMoon, 190, 190, this.drawTravelMoon);
+    this.createCanvas(scene, keys.travelMars, 190, 190, this.drawTravelMars);
   },
 
   createCanvas(scene, key, width, height, draw) {
@@ -2051,6 +2059,152 @@ window.SpaceArt = {
     ctx.lineWidth = 3;
     ctx.beginPath(); ctx.arc(0, 0, 77, -2.8, 0.75); ctx.stroke();
     ctx.restore();
+  },
+
+  drawLaCometa(ctx) {
+    ctx.save();
+    ctx.shadowColor = "rgba(70, 220, 255, 0.62)";
+    ctx.shadowBlur = 28;
+    ctx.fillStyle = "rgba(6, 10, 28, 0.62)";
+    ctx.beginPath(); ctx.ellipse(245, 211, 183, 15, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+
+    const flame = ctx.createLinearGradient(10, 135, 91, 135);
+    flame.addColorStop(0, "rgba(63, 227, 255, 0)");
+    flame.addColorStop(0.45, "rgba(83, 229, 255, 0.78)");
+    flame.addColorStop(1, "#fff0bf");
+    ctx.fillStyle = flame;
+    ctx.beginPath();
+    ctx.moveTo(29, 119); ctx.lineTo(91, 128); ctx.lineTo(91, 141); ctx.lineTo(29, 151);
+    ctx.closePath(); ctx.fill();
+
+    const fin = ctx.createLinearGradient(77, 67, 151, 185);
+    fin.addColorStop(0, "#f7e9c5"); fin.addColorStop(0.55, "#8295ae"); fin.addColorStop(1, "#354563");
+    ctx.fillStyle = fin; ctx.strokeStyle = "#d9eff6"; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(111, 111); ctx.lineTo(73, 65); ctx.lineTo(163, 91); ctx.closePath();
+    ctx.moveTo(111, 158); ctx.lineTo(73, 204); ctx.lineTo(163, 178); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    const hull = ctx.createLinearGradient(77, 84, 412, 192);
+    hull.addColorStop(0, "#fff4d8"); hull.addColorStop(0.3, "#c8d6df");
+    hull.addColorStop(0.65, "#788aa3"); hull.addColorStop(1, "#384667");
+    ctx.fillStyle = hull; ctx.strokeStyle = "#f4e7ca"; ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(43, 134); ctx.lineTo(112, 91); ctx.lineTo(324, 91);
+    ctx.lineTo(458, 134); ctx.lineTo(324, 178); ctx.lineTo(112, 178);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+
+    ctx.strokeStyle = "rgba(255, 255, 235, 0.72)";
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(94, 112); ctx.lineTo(322, 108); ctx.lineTo(421, 134); ctx.stroke();
+    ctx.strokeStyle = "rgba(54, 75, 111, 0.82)";
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(98, 157); ctx.lineTo(321, 162); ctx.lineTo(413, 136); ctx.stroke();
+
+    const glass = ctx.createLinearGradient(164, 77, 300, 158);
+    glass.addColorStop(0, "rgba(164, 245, 255, 0.38)");
+    glass.addColorStop(0.5, "rgba(54, 146, 190, 0.26)");
+    glass.addColorStop(1, "rgba(20, 52, 94, 0.46)");
+    ctx.fillStyle = glass; ctx.strokeStyle = "#bdf7ff"; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.roundRect(157, 76, 158, 85, 32); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = "rgba(226, 250, 255, 0.78)";
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(236, 82); ctx.lineTo(236, 155); ctx.stroke();
+    ctx.fillStyle = "rgba(255, 255, 255, 0.55)";
+    ctx.beginPath(); ctx.ellipse(193, 91, 21, 5, -0.3, 0, Math.PI * 2); ctx.fill();
+
+    const port = ctx.createRadialGradient(345, 122, 2, 347, 131, 25);
+    port.addColorStop(0, "#fff2c6"); port.addColorStop(0.32, "#89f0ff"); port.addColorStop(1, "#263e68");
+    ctx.fillStyle = port; ctx.strokeStyle = "#f7e8c9"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(347, 133, 22, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = "#f4d49b";
+    [[117, 101], [133, 168], [299, 100], [319, 168], [390, 133]].forEach(([x, y]) => {
+      ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.strokeStyle = "rgba(160, 224, 240, 0.75)";
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(61, 134); ctx.lineTo(39, 134); ctx.stroke();
+  },
+
+  drawTravelEarth(ctx) {
+    ctx.save();
+    ctx.shadowColor = "rgba(83, 210, 255, 0.82)";
+    ctx.shadowBlur = 28;
+    const glow = ctx.createRadialGradient(95, 95, 61, 95, 95, 94);
+    glow.addColorStop(0, "rgba(92, 207, 255, 0.28)");
+    glow.addColorStop(1, "rgba(56, 111, 219, 0)");
+    ctx.fillStyle = glow; ctx.fillRect(0, 0, 190, 190);
+    const ocean = ctx.createRadialGradient(64, 56, 5, 95, 95, 79);
+    ocean.addColorStop(0, "#b6f4ff"); ocean.addColorStop(0.22, "#4eb8e6");
+    ocean.addColorStop(0.62, "#2465b5"); ocean.addColorStop(1, "#15234f");
+    ctx.fillStyle = ocean;
+    ctx.beginPath(); ctx.arc(95, 95, 74, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    ctx.save(); ctx.beginPath(); ctx.arc(95, 95, 73, 0, Math.PI * 2); ctx.clip();
+    const land = ctx.createLinearGradient(36, 36, 153, 156);
+    land.addColorStop(0, "#c6d99b"); land.addColorStop(0.5, "#63af7d"); land.addColorStop(1, "#337d68");
+    ctx.fillStyle = land;
+    ctx.beginPath();
+    ctx.moveTo(39, 69); ctx.lineTo(55, 55); ctx.lineTo(71, 59); ctx.lineTo(78, 75);
+    ctx.lineTo(69, 87); ctx.lineTo(75, 101); ctx.lineTo(61, 113); ctx.lineTo(54, 138);
+    ctx.lineTo(42, 127); ctx.lineTo(36, 102); ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(88, 52); ctx.lineTo(105, 47); ctx.lineTo(114, 59); ctx.lineTo(132, 60);
+    ctx.lineTo(148, 77); ctx.lineTo(137, 92); ctx.lineTo(124, 91); ctx.lineTo(119, 108);
+    ctx.lineTo(108, 116); ctx.lineTo(99, 99); ctx.lineTo(88, 88); ctx.lineTo(95, 74); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = "rgba(238, 251, 255, 0.7)"; ctx.lineWidth = 7; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(52, 48); ctx.bezierCurveTo(83, 37, 112, 42, 133, 53); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(111, 135); ctx.bezierCurveTo(131, 126, 145, 116, 156, 99); ctx.stroke();
+    ctx.restore();
+    ctx.strokeStyle = "rgba(226, 249, 255, 0.76)"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(95, 95, 73, -2.35, 0.8); ctx.stroke();
+  },
+
+  drawTravelMoon(ctx) {
+    const moon = ctx.createRadialGradient(59, 52, 4, 97, 98, 88);
+    moon.addColorStop(0, "#f4f4ef"); moon.addColorStop(0.36, "#b5becd");
+    moon.addColorStop(0.72, "#737f98"); moon.addColorStop(1, "#303d5c");
+    ctx.fillStyle = moon;
+    ctx.beginPath(); ctx.arc(95, 95, 76, 0, Math.PI * 2); ctx.fill();
+    ctx.save(); ctx.beginPath(); ctx.arc(95, 95, 74, 0, Math.PI * 2); ctx.clip();
+    [[61, 65, 16], [119, 58, 9], [127, 112, 19], [73, 126, 11], [97, 91, 7]]
+      .forEach(([x, y, r]) => {
+        ctx.fillStyle = "rgba(43, 54, 79, 0.32)";
+        ctx.beginPath(); ctx.arc(x + 2, y + 3, r, 0, Math.PI * 2); ctx.fill();
+        const crater = ctx.createLinearGradient(x - r, y - r, x + r, y + r);
+        crater.addColorStop(0, "rgba(239, 241, 238, 0.88)");
+        crater.addColorStop(1, "rgba(89, 103, 128, 0.62)");
+        ctx.fillStyle = crater;
+        ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.74, -0.22, 0, Math.PI * 2); ctx.fill();
+      });
+    ctx.restore();
+    ctx.strokeStyle = "rgba(255, 255, 245, 0.72)"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(95, 95, 75, -2.4, 0.82); ctx.stroke();
+  },
+
+  drawTravelMars(ctx) {
+    const mars = ctx.createRadialGradient(61, 53, 5, 96, 97, 87);
+    mars.addColorStop(0, "#ffd49b"); mars.addColorStop(0.28, "#e77949");
+    mars.addColorStop(0.68, "#a84636"); mars.addColorStop(1, "#512a47");
+    ctx.fillStyle = mars;
+    ctx.beginPath(); ctx.arc(95, 95, 76, 0, Math.PI * 2); ctx.fill();
+    ctx.save(); ctx.beginPath(); ctx.arc(95, 95, 74, 0, Math.PI * 2); ctx.clip();
+    ctx.fillStyle = "rgba(94, 38, 48, 0.58)";
+    ctx.beginPath(); ctx.moveTo(30, 94); ctx.bezierCurveTo(55, 78, 73, 109, 94, 92);
+    ctx.bezierCurveTo(116, 76, 133, 97, 165, 80); ctx.lineTo(165, 104);
+    ctx.bezierCurveTo(132, 119, 116, 99, 94, 115); ctx.bezierCurveTo(70, 132, 51, 101, 30, 117);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "rgba(255, 216, 163, 0.76)";
+    ctx.beginPath(); ctx.ellipse(96, 34, 31, 8, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "rgba(255, 227, 183, 0.6)";
+    [[57, 57, 3], [130, 62, 4], [61, 136, 3], [123, 132, 3]].forEach(([x, y, r]) => {
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.restore();
+    ctx.strokeStyle = "rgba(255, 220, 178, 0.78)"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(95, 95, 75, -2.35, 0.75); ctx.stroke();
   },
 
   drawDeepEarthDot(ctx) {

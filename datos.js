@@ -6,7 +6,7 @@ window.SpaceData = {
     height: 720,
     backgroundColor: "#0b1020",
     parent: "game-container",
-    scene: ["BootScene", "LoadingScene", "OpeningScene", "MenuScene", "SystemMapScene", "CreditsScene", "JournalScene", "PauseScene", "ExpeditionScene"],
+    scene: ["BootScene", "LoadingScene", "OpeningScene", "MenuScene", "SystemMapScene", "WorldTravelScene", "CreditsScene", "JournalScene", "PauseScene", "ExpeditionScene"],
     scale: {
       mode: "FIT",
       autoCenter: "CENTER_BOTH"
@@ -155,6 +155,15 @@ window.SpaceData = {
     mapMarsDescription: "5 mission signals",
     mapDeepDescription: "5 mission signals",
     mapSelectHint: "Select a world with the pointer or LEFT/RIGHT + ENTER.",
+    travelShipName: "LA COMETA",
+    travelEarthLabel: "EARTH",
+    travelArrival: "ARRIVING AT {world}",
+    travelSkipHint: "TAP OR PRESS ANY KEY TO SKIP",
+    travelDialogue: {
+      moon: "Maia: The Moon is our first quiet signal.",
+      mars: "Maia: Red dunes ahead. Let's follow the explorers' tracks.",
+      deep: "Tuerca: That faraway glow is our next signal."
+    },
     mapBack: "RETURN TO THE MENU",
     pauseTitle: "EXPEDITION PAUSED",
     pauseHint: "P: resume journey     ESC: return to the main menu",
@@ -934,6 +943,15 @@ window.SpaceData = {
       mapMarsDescription: "5 señales de misión",
       mapDeepDescription: "5 señales de misión",
       mapSelectHint: "Elige un mundo con el puntero o IZQUIERDA/DERECHA + ENTER.",
+      travelShipName: "LA COMETA",
+      travelEarthLabel: "TIERRA",
+      travelArrival: "LLEGANDO A {world}",
+      travelSkipHint: "TOCA O PULSA CUALQUIER TECLA PARA SALTAR",
+      travelDialogue: {
+        moon: "Maia: La Luna es nuestra primera señal silenciosa.",
+        mars: "Maia: Se acercan dunas rojas. Sigamos las huellas de los exploradores.",
+        deep: "Tuerca: Ese brillo lejano es nuestra próxima señal."
+      },
       mapBack: "VOLVER AL MENÚ",
       pauseTitle: "EXPEDICIÓN EN PAUSA",
       pauseHint: "P: continuar el viaje     ESC: volver al menú principal",
