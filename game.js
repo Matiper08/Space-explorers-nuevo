@@ -1,6 +1,7 @@
 // Escenas base: inicio, carga, menu y escenario de expedicion.
 (function startSpaceExplorers() {
   const data = window.SpaceData;
+  const art = window.SpaceArt.keys;
   const errorPanel = document.getElementById("startup-error");
 
   if (!window.Phaser) {
@@ -39,7 +40,7 @@
         fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "20px"
       }).setOrigin(0.5);
-      this.spinner = this.add.image(640, 415, "signal-mark").setDisplaySize(36, 36);
+      this.spinner = this.add.image(640, 415, art.signal).setDisplaySize(36, 36);
     }
 
     create() {
@@ -59,9 +60,9 @@
     }
 
     create() {
-      this.add.image(0, 0, "moon-valley-sky").setOrigin(0);
+      this.add.image(0, 0, art.menuBackground).setOrigin(0);
       this.add.rectangle(640, 360, 1280, 720, 0x091020, 0.34);
-      this.add.image(640, 162, "signal-mark").setDisplaySize(64, 64);
+      this.add.image(640, 162, art.signal).setDisplaySize(64, 64);
 
       this.add.text(640, 232, data.text.eyebrow, {
         color: "#e7c89b",
@@ -129,64 +130,533 @@
     }
 
     create() {
-      this.add.image(0, 0, "moon-valley-sky").setOrigin(0);
-      this.add.rectangle(640, 360, 1280, 720, 0x0b1020, 0.28);
-      this.add.text(72, 58, data.text.expeditionLabel, {
-        color: "#f0cd98",
-        fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
-        fontSize: "20px",
-        fontStyle: "bold",
-        letterSpacing: 3
+      this.parkour = data.config.parkour;
+      this.physics.world.gravity.y = this.parkour.gravity;
+      this.physics.world.setBounds(0, 0, this.parkour.worldWidth, this.parkour.rescueY);
+      this.cameras.main.setBounds(0, 0, this.parkour.worldWidth, 720);
+      [
+        [art.sky, 0.08, -30],
+        [art.farRidge, 0.18, -28],
+        [art.middleRidge, 0.32, -26],
+        [art.nearRidge, 0.48, -24],
+        [art.regolith, 0.64, -22]
+      ].forEach(([key, scroll, depth]) => {
+        this.add.tileSprite(0, 0, this.parkour.worldWidth, 720, key)
+          .setOrigin(0)
+          .setScrollFactor(scroll)
+          .setDepth(depth);
       });
-      this.add.text(72, 98, data.text.expeditionTitle, {
-        color: "#fff8ec",
-        fontFamily: "Georgia, Times New Roman, serif",
-        fontSize: "48px",
-        fontStyle: "bold"
+      this.add.image(640, 360, art.vignette).setScrollFactor(0).setDepth(6);
+      this.createPlayer();
+      this.createCourse();
+      this.createCompanions();
+      this.createHud();
+      this.createParticles();
+
+      this.keys = this.input.keyboard.addKeys({
+        left: Phaser.Input.Keyboard.KeyCodes.LEFT,
+        right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
+        a: Phaser.Input.Keyboard.KeyCodes.A,
+        d: Phaser.Input.Keyboard.KeyCodes.D,
+        up: Phaser.Input.Keyboard.KeyCodes.UP,
+        w: Phaser.Input.Keyboard.KeyCodes.W,
+        space: Phaser.Input.Keyboard.KeyCodes.SPACE
       });
-      this.add.text(72, 166, data.text.expeditionCopy, {
-        color: "#f1f0eb",
-        fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
-        fontSize: "22px",
-        lineSpacing: 10,
-        wordWrap: { width: 620 }
+      this.jumpKeys = [this.keys.up, this.keys.w, this.keys.space];
+      this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
+      this.cameras.main.setFollowOffset(120, 0);
+      this.coyoteTimer = 0;
+      this.jumpBufferTimer = 0;
+      this.airJumps = 1;
+      this.wasGrounded = false;
+      this.inLowGravity = false;
+      this.inWind = false;
+      this.echoStars = 0;
+      this.batteries = 3;
+      this.checkpointX = 90;
+      this.checkpointY = 530;
+      this.rescueMessage = null;
+      this.completed = false;
+      this.playerCelebrateUntil = 0;
+      this.tuercaCelebrateUntil = 0;
+      this.maiaBlinkUntil = 0;
+      this.nextMaiaBlink = 2400;
+      this.updateStats();
+      this.input.keyboard.on("keydown-ESC", () => this.scene.start("MenuScene"));
+      this.input.keyboard.on("keydown-R", () => this.scene.restart());
+    }
+
+    createCourse() {
+      const worldWidth = this.parkour.worldWidth;
+      this.ground = this.physics.add.staticGroup();
+      this.platforms = this.physics.add.staticGroup();
+      this.fallingPlatforms = this.physics.add.group({ allowGravity: false, immovable: true });
+      this.movingPlatforms = this.physics.add.group({ allowGravity: false, immovable: true });
+      this.springs = this.physics.add.staticGroup();
+      this.echoes = this.physics.add.staticGroup();
+
+      const groundSections = [
+        [0, 1050], [1190, 2130], [2260, 3370], [3490, worldWidth - 3490]
+      ];
+      groundSections.forEach(([x, width]) => {
+        const ledge = this.ground.create(x + width / 2, this.parkour.groundY + 28, art.platform);
+        ledge.setDisplaySize(width, 92).refreshBody();
+        this.add.ellipse(x + width / 2, this.parkour.groundY + 16, width * 0.92, 24, 0x11182a, 0.38);
       });
 
-      this.add.ellipse(920, 552, 440, 38, 0x171d32, 0.54);
-      this.add.rectangle(0, 586, 1280, 134, 0x171d32, 0.54).setOrigin(0);
-      this.add.rectangle(880, 500, 226, 220, 0x28324b, 0.9)
-        .setStrokeStyle(2, 0xe7c89b, 0.82);
-      this.add.circle(880, 365, 34, 0x8db5cb, 1)
-        .setStrokeStyle(3, 0xd8eff2, 0.9);
-      this.add.circle(880, 365, 11, 0xf8e8bd, 1);
-      this.add.text(880, 435, data.text.stationLabel, {
-        color: "#f0cd98",
-        fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
-        fontSize: "18px",
-        fontStyle: "bold",
-        letterSpacing: 2
+      [
+        [330, 510, 210], [590, 430, 180], [870, 520, 190],
+        [1080, 460, 180], [1330, 505, 190], [1570, 450, 180],
+        [1810, 510, 160], [1990, 435, 170], [2330, 520, 190],
+        [2580, 455, 190], [2830, 390, 180], [3100, 480, 190],
+        [3395, 520, 170], [3650, 450, 190], [3910, 390, 180],
+        [4170, 495, 190], [4430, 430, 180]
+      ].forEach(([x, y, width]) => this.addStaticPlatform(x, y, width));
+
+      this.addFallingPlatform(1460, 370);
+      this.addFallingPlatform(3030, 320);
+      this.addMovingPlatform(2190, 485, 130, 76, 2300);
+      this.addMovingPlatform(3770, 360, 110, 82, 1600);
+      this.addSpring(1880, 574);
+      this.addSpring(3245, 574);
+      this.addWall(2710, 500, 44, 220);
+      this.addWall(3990, 440, 44, 300);
+      this.addEcho(510, 380);
+      this.addEcho(1020, 400);
+      this.addEcho(1680, 325);
+      this.addEcho(2445, 400);
+      this.addEcho(2920, 320);
+      this.addEcho(3570, 375);
+      this.addEcho(4300, 360);
+
+      this.lowGravityZone = this.addZone(2350, 330, 620, 550, 0x81d9e3, 0.11);
+      this.windZone = this.addZone(3520, 300, 500, 310, 0xf0cd98, 0.08);
+
+      this.checkpoint = this.physics.add.staticImage(2300, 542, art.signal)
+        .setDisplaySize(36, 36);
+      this.add.text(2300, 500, data.text.parkourCheckpoint, {
+        color: "#f7e4ba", fontSize: "18px", fontStyle: "bold",
+        fontFamily: "Trebuchet MS, Segoe UI, sans-serif"
       }).setOrigin(0.5);
-      this.add.text(880, 468, data.text.stationTitle, {
-        color: "#fff8ec",
-        fontFamily: "Georgia, Times New Roman, serif",
-        fontSize: "26px"
-      }).setOrigin(0.5);
-      this.add.text(880, 510, data.text.stationCopy, {
-        color: "#d8ddeb",
-        fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
-        fontSize: "18px",
-        align: "center",
-        lineSpacing: 4,
-        wordWrap: { width: 205 }
-      }).setOrigin(0.5, 0);
-      this.add.text(640, 665, data.text.controls, {
-        color: "#f1f0eb",
-        fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
-        fontSize: "18px",
-        fontStyle: "bold"
+      this.goal = this.physics.add.staticImage(worldWidth - 115, 500, art.signal)
+        .setDisplaySize(66, 66);
+      this.add.text(worldWidth - 115, 438, data.text.parkourGoal, {
+        color: "#fff3ca", fontSize: "22px", fontStyle: "bold",
+        fontFamily: "Trebuchet MS, Segoe UI, sans-serif"
       }).setOrigin(0.5);
 
-      this.input.keyboard.once("keydown-ESC", () => this.scene.start("MenuScene"));
+      this.physics.add.collider(this.player, this.ground);
+      this.physics.add.collider(this.player, this.platforms);
+      this.physics.add.collider(this.player, this.fallingPlatforms, this.touchFallingPlatform, null, this);
+      this.physics.add.collider(this.player, this.movingPlatforms);
+      this.physics.add.collider(this.player, this.springs, this.bounceOnSpring, null, this);
+      this.physics.add.overlap(this.player, this.echoes, this.collectEcho, null, this);
+      this.physics.add.overlap(this.player, this.lowGravityZone, () => { this.inLowGravity = true; });
+      this.physics.add.overlap(this.player, this.windZone, () => { this.inWind = true; });
+      this.physics.add.overlap(this.player, this.checkpoint, this.saveCheckpoint, null, this);
+      this.physics.add.overlap(this.player, this.goal, this.finishCourse, null, this);
+
+      this.cameras.main.setRoundPixels(true);
+    }
+
+    addStaticPlatform(x, y, width) {
+      const platform = this.platforms.create(x, y, art.platform);
+      platform.setDisplaySize(width, 30).refreshBody();
+      return platform;
+    }
+
+    addFallingPlatform(x, y) {
+      const platform = this.fallingPlatforms.create(x, y, art.platform);
+      platform.setDisplaySize(170, 28);
+      platform.body.setSize(170, 28).setAllowGravity(false).setImmovable(true);
+      platform.isFalling = false;
+      return platform;
+    }
+
+    addMovingPlatform(x, y, width, distance, duration) {
+      const platform = this.movingPlatforms.create(x, y, art.platform);
+      platform.setDisplaySize(width, 28);
+      platform.body.setSize(width, 28).setAllowGravity(false).setImmovable(true);
+      this.tweens.add({
+        targets: platform,
+        y: y - distance,
+        duration,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.inOut"
+      });
+      return platform;
+    }
+
+    addSpring(x, y) {
+      const spring = this.springs.create(x, y, art.spring);
+      spring.setDisplaySize(150, 30).refreshBody();
+      return spring;
+    }
+
+    addWall(x, y, width, height) {
+      const wall = this.platforms.create(x, y, art.platform);
+      wall.setDisplaySize(width, height).refreshBody();
+      return wall;
+    }
+
+    addEcho(x, y) {
+      const echo = this.echoes.create(x, y, art.echo);
+      echo.setDisplaySize(28, 28).refreshBody();
+      this.tweens.add({ targets: echo, y: y - 11, duration: 850, yoyo: true, repeat: -1, ease: "Sine.inOut" });
+      return echo;
+    }
+
+    addZone(x, y, width, height, color, alpha) {
+      this.add.rectangle(x, y, width, height, color, alpha).setStrokeStyle(2, color, 0.36);
+      const zone = this.add.zone(x, y, width, height);
+      this.physics.add.existing(zone, false);
+      zone.body.setAllowGravity(false).setImmovable(true);
+      return zone;
+    }
+
+    createPlayer() {
+      this.player = this.physics.add.sprite(90, 530, art.maiaIdle).setDisplaySize(66, 78);
+      this.player.body.setSize(49, 81).setOffset(23, 16);
+      this.player.body.setMaxVelocity(this.parkour.maxSpeed, 1100);
+      this.player.body.setDragX(this.parkour.groundFriction);
+      this.player.setDepth(5);
+    }
+
+    createCompanions() {
+      this.tuerca = this.add.sprite(this.player.x - 52, this.player.y + 12, art.tuercaIdle)
+        .setDisplaySize(66, 66)
+        .setDepth(5.2);
+      this.grays = this.physics.add.staticGroup();
+      [720, 1270, 2510, 4140].forEach((x) => {
+        const gray = this.grays.create(x, this.parkour.groundY - 43, art.grayIdle);
+        gray.setDisplaySize(52, 52).refreshBody().setDepth(4.5);
+        gray.nextBlink = Phaser.Math.Between(1500, 3600);
+        gray.blinkUntil = 0;
+        gray.isSparked = false;
+        this.tweens.add({
+          targets: gray,
+          scaleY: 0.94,
+          duration: Phaser.Math.Between(520, 760),
+          yoyo: true,
+          repeat: -1,
+          ease: "Sine.inOut"
+        });
+      });
+      this.physics.add.overlap(this.player, this.grays, this.stompGray, null, this);
+    }
+
+    createHud() {
+      const fixedText = {
+        color: "#fff8ec",
+        fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "19px",
+        fontStyle: "bold",
+        stroke: "#10172a",
+        strokeThickness: 4
+      };
+      this.add.text(28, 20, data.text.expeditionLabel, {
+        ...fixedText, color: "#f0cd98", fontSize: "18px", letterSpacing: 2
+      }).setScrollFactor(0).setDepth(10);
+      this.add.text(28, 49, data.text.parkourIntro, {
+        ...fixedText, fontFamily: "Georgia, Times New Roman, serif", fontSize: "30px"
+      }).setScrollFactor(0).setDepth(10);
+      this.statusText = this.add.text(28, 89, data.text.parkourHint, {
+        ...fixedText, color: "#d8ddeb", fontSize: "18px", fontStyle: "normal"
+      }).setScrollFactor(0).setDepth(10);
+      this.statsText = this.add.text(28, 130, "", {
+        ...fixedText, color: "#f7e4ba", fontSize: "18px"
+      }).setScrollFactor(0).setDepth(10);
+      this.helpText = this.add.text(640, 675, data.text.parkourStart, {
+        ...fixedText, align: "center", fontSize: "18px", color: "#f1f0eb"
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(10);
+    }
+
+    createParticles() {
+      this.dust = this.add.particles(0, 0, art.dust, {
+        speed: { min: 45, max: 170 },
+        angle: { min: 205, max: 335 },
+        scale: { start: 0.9, end: 0 },
+        alpha: { start: 0.7, end: 0 },
+        lifespan: 400,
+        gravityY: 210,
+        quantity: 0,
+        emitting: false,
+        tint: [0xf8e8bd, 0x9fcee0, 0xffffff]
+      });
+      this.sparkles = this.add.particles(0, 0, art.dust, {
+        speed: { min: 50, max: 190 },
+        angle: { min: 0, max: 360 },
+        scale: { start: 1.1, end: 0 },
+        alpha: { start: 0.95, end: 0 },
+        lifespan: 550,
+        quantity: 0,
+        emitting: false,
+        tint: [0xffe6a4, 0x9fe5eb, 0xffffff]
+      });
+      this.colorSparks = this.add.particles(0, 0, art.dust, {
+        speed: { min: 70, max: 230 },
+        angle: { min: 0, max: 360 },
+        scale: { start: 1.5, end: 0 },
+        alpha: { start: 1, end: 0 },
+        lifespan: 750,
+        quantity: 0,
+        emitting: false,
+        tint: [0xff9f86, 0xffd66e, 0x92e4c2, 0x9fc8ff, 0xe7a9ff]
+      });
+      this.ambientDust = this.add.particles(0, 0, art.dust, {
+        speedX: { min: -13, max: 13 },
+        speedY: { min: -12, max: 3 },
+        scale: { min: 0.25, max: 0.65 },
+        alpha: { start: 0.38, end: 0 },
+        lifespan: 5000,
+        frequency: 110,
+        maxParticles: 54,
+        tint: [0xe8edfa, 0xf6dcae],
+        emitZone: {
+          type: "random",
+          source: new Phaser.Geom.Rectangle(0, 0, this.parkour.worldWidth, 720)
+        }
+      });
+    }
+
+    stompGray(player, gray) {
+      if (!gray.active || gray.isSparked) return;
+      const landingOnTop = player.body.velocity.y > 55
+        && player.y < gray.y - 10;
+      if (!landingOnTop) return;
+
+      gray.isSparked = true;
+      gray.body.enable = false;
+      gray.setTexture(art.grayAwake);
+      player.body.setVelocityY(-330);
+      this.airJumps = 1;
+      this.playerCelebrateUntil = this.time.now + 420;
+      this.tuercaCelebrateUntil = this.time.now + 620;
+      this.colorSparks.emitParticleAt(gray.x, gray.y, 22);
+      this.tweens.add({
+        targets: gray,
+        scale: 1.8,
+        alpha: 0,
+        duration: 360,
+        ease: "Cubic.out",
+        onComplete: () => gray.destroy()
+      });
+    }
+
+    touchFallingPlatform(player, platform) {
+      if (!platform.isFalling && player.body.velocity.y >= 0) {
+        platform.isFalling = true;
+        platform.body.setImmovable(false).setAllowGravity(true);
+        this.time.delayedCall(1100, () => {
+          if (platform.active) platform.destroy();
+        });
+      }
+    }
+
+    bounceOnSpring(player) {
+      if (player.body.velocity.y >= -100) {
+        player.body.setVelocityY(-this.parkour.trampolineVelocity);
+        this.airJumps = 1;
+        this.dust.emitParticleAt(player.x, player.y + 24, 12);
+        this.cameras.main.shake(110, 0.002);
+      }
+    }
+
+    collectEcho(player, echo) {
+      echo.destroy();
+      this.echoStars += 1;
+      this.sparkles.emitParticleAt(player.x, player.y, 14);
+      this.updateStats();
+    }
+
+    saveCheckpoint() {
+      if (this.checkpointX !== 2300) {
+        this.checkpointX = 2300;
+        this.checkpointY = 510;
+        this.checkpoint.setTint(0xb5f2e7);
+        this.showStatus(data.text.parkourCheckpoint);
+      }
+    }
+
+    finishCourse() {
+      if (this.completed) return;
+      this.completed = true;
+      this.playerCelebrateUntil = Number.POSITIVE_INFINITY;
+      this.tuercaCelebrateUntil = Number.POSITIVE_INFINITY;
+      this.player.setTexture(art.maiaCelebrate).setAngle(0);
+      this.tuerca.setTexture(art.tuercaCelebrate);
+      this.player.body.setVelocity(0, 0);
+      this.showStatus(data.text.parkourFinish);
+      this.sparkles.emitParticleAt(this.goal.x, this.goal.y, 36);
+    }
+
+    showStatus(message) {
+      this.statusText.setText(message);
+      if (this.rescueMessage) this.rescueMessage.remove(false);
+      this.rescueMessage = this.time.delayedCall(2800, () => {
+        if (!this.completed) this.statusText.setText(data.text.parkourHint);
+      });
+    }
+
+    updateStats() {
+      this.statsText.setText(
+        `${data.text.parkourStars}: ${this.echoStars}     ${data.text.parkourBatteries}: ${"●".repeat(this.batteries)}${"○".repeat(3 - this.batteries)}`
+      );
+    }
+
+    rescuePlayer() {
+      this.batteries = Math.max(0, this.batteries - 1);
+      this.updateStats();
+      this.player.setPosition(this.checkpointX, this.checkpointY);
+      this.player.body.reset(this.checkpointX, this.checkpointY);
+      this.player.body.setVelocity(0, 0);
+      this.airJumps = 1;
+      this.playerCelebrateUntil = this.time.now + 600;
+      this.tuercaCelebrateUntil = this.time.now + 750;
+      this.showStatus(data.text.parkourRescue);
+      this.sparkles.emitParticleAt(this.checkpointX, this.checkpointY, 12);
+    }
+
+    updateCharacterArt(time, grounded, direction) {
+      const body = this.player.body;
+      let maiaKey = art.maiaIdle;
+      if (time < this.playerCelebrateUntil) {
+        maiaKey = art.maiaCelebrate;
+      } else if (!grounded && body.velocity.y < -75) {
+        maiaKey = art.maiaJump;
+      } else if (!grounded && body.velocity.y > 85) {
+        maiaKey = art.maiaFall;
+      } else if (grounded && Math.abs(body.velocity.x) > 30) {
+        maiaKey = Math.floor(time / 115) % 2 === 0 ? art.maiaWalkA : art.maiaWalkB;
+      } else if (time < this.maiaBlinkUntil) {
+        maiaKey = art.maiaBlink;
+      } else if (time >= this.nextMaiaBlink) {
+        this.maiaBlinkUntil = time + 130;
+        this.nextMaiaBlink = time + Phaser.Math.Between(2100, 3600);
+        maiaKey = art.maiaBlink;
+      }
+      if (this.player.texture.key !== maiaKey) this.player.setTexture(maiaKey);
+
+      let tuercaKey = art.tuercaIdle;
+      if (time < this.tuercaCelebrateUntil) {
+        tuercaKey = art.tuercaCelebrate;
+      } else if (!grounded && body.velocity.y < -70) {
+        tuercaKey = art.tuercaHop;
+      } else if (!grounded && body.velocity.y > 90) {
+        tuercaKey = art.tuercaFall;
+      } else if (grounded && Math.abs(body.velocity.x) > 24) {
+        tuercaKey = Math.floor(time / 145) % 2 === 0 ? art.tuercaRollA : art.tuercaRollB;
+      }
+      if (this.tuerca.texture.key !== tuercaKey) this.tuerca.setTexture(tuercaKey);
+      const facing = direction === 0 ? (body.velocity.x < 0 ? -1 : 1) : direction;
+      this.tuerca.setPosition(
+        this.player.x - facing * 48,
+        this.player.y + 13 + Math.sin(time * 0.005) * 2
+      );
+      this.tuerca.setAngle(grounded ? Phaser.Math.Clamp(body.velocity.x * 0.12, -9, 9) : 0);
+
+      this.grays.children.iterate((gray) => {
+        if (!gray || !gray.active || gray.isSparked) return;
+        if (time >= gray.nextBlink) {
+          gray.setTexture(art.grayBlink);
+          gray.blinkUntil = time + 140;
+          gray.nextBlink = time + Phaser.Math.Between(1900, 3400);
+        } else if (gray.texture.key === art.grayBlink && time >= gray.blinkUntil) {
+          gray.setTexture(art.grayIdle);
+        }
+      });
+    }
+
+    update(time, delta) {
+      if (!this.player || this.completed) return;
+      const dt = Math.min(delta / 1000, 0.04);
+      const body = this.player.body;
+      const grounded = body.blocked.down || body.touching.down;
+      const left = this.keys.left.isDown || this.keys.a.isDown;
+      const right = this.keys.right.isDown || this.keys.d.isDown;
+      const direction = Number(right) - Number(left);
+      const jumpPressed = this.jumpKeys.some((key) => Phaser.Input.Keyboard.JustDown(key));
+      const jumpHeld = this.jumpKeys.some((key) => key.isDown);
+
+      if (grounded) {
+        this.coyoteTimer = this.parkour.coyoteTime;
+        this.airJumps = 1;
+      } else {
+        this.coyoteTimer = Math.max(0, this.coyoteTimer - dt);
+      }
+      if (jumpPressed) this.jumpBufferTimer = this.parkour.jumpBuffer;
+      else this.jumpBufferTimer = Math.max(0, this.jumpBufferTimer - dt);
+
+      const wallSide = body.blocked.left || body.touching.left ? -1
+        : body.blocked.right || body.touching.right ? 1 : 0;
+      const wallSliding = !grounded && wallSide !== 0 && body.velocity.y > 0;
+      const control = grounded ? 1 : this.parkour.airControl;
+      body.setAccelerationX(direction * this.parkour.acceleration * control);
+      body.setDragX(direction === 0
+        ? (grounded ? this.parkour.groundFriction : this.parkour.groundFriction * 0.16)
+        : 0);
+      if (wallSliding) body.setVelocityY(Math.min(body.velocity.y, 170));
+      if (this.inWind) body.setAccelerationX(body.acceleration.x + 110);
+
+      const atApex = Math.abs(body.velocity.y) < 105;
+      const gravityScale = (this.inLowGravity ? this.parkour.lowGravityScale : 1)
+        * (atApex ? this.parkour.apexGravityScale : 1);
+      body.setGravityY(this.parkour.gravity * (gravityScale - 1));
+
+      if (this.jumpBufferTimer > 0) {
+        if (grounded || this.coyoteTimer > 0) {
+          body.setVelocityY(-this.parkour.jumpVelocity);
+          this.jumpBufferTimer = 0;
+          this.coyoteTimer = 0;
+          this.wasGrounded = false;
+        } else if (wallSliding) {
+          body.setVelocity(this.parkour.wallJumpVelocityX * wallSide, -this.parkour.wallJumpVelocityY);
+          this.jumpBufferTimer = 0;
+          this.airJumps = 1;
+          this.wasGrounded = false;
+          this.sparkles.emitParticleAt(this.player.x, this.player.y, 8);
+        } else if (this.airJumps > 0) {
+          body.setVelocityY(-this.parkour.doubleJumpVelocity);
+          this.airJumps -= 1;
+          this.jumpBufferTimer = 0;
+          this.sparkles.emitParticleAt(this.player.x, this.player.y, 10);
+        }
+      }
+
+      if (this.wasJumpHeld && !jumpHeld && body.velocity.y < -150) {
+        body.setVelocityY(body.velocity.y * 0.52);
+      }
+      this.wasJumpHeld = jumpHeld;
+      this.inLowGravity = false;
+      this.inWind = false;
+      this.cameras.main.setFollowOffset(direction < 0 ? -90 : 120, 0);
+
+      if (grounded && !this.wasGrounded) {
+        this.dust.emitParticleAt(this.player.x, this.player.y + 24, 9);
+        this.cameras.main.shake(75, 0.001);
+        this.tweens.add({
+          targets: this.player,
+          scaleX: 0.82,
+          scaleY: 1.13,
+          duration: 75,
+          yoyo: true,
+          ease: "Quad.out"
+        });
+        this.tweens.add({
+          targets: this.tuerca,
+          scaleX: this.tuerca.scaleX * 0.86,
+          scaleY: this.tuerca.scaleY * 1.12,
+          duration: 85,
+          yoyo: true,
+          ease: "Quad.out"
+        });
+      }
+      this.wasGrounded = grounded;
+      this.player.setAngle(Phaser.Math.Clamp(body.velocity.x * 0.018, -7, 7));
+      this.updateCharacterArt(time, grounded, direction);
+
+      if (this.player.y > this.parkour.rescueY - 30) this.rescuePlayer();
     }
   }
 
