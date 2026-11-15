@@ -222,8 +222,8 @@
         fontStyle: "bold",
         align: "center"
       }).setOrigin(0.5);
-      worldButton.on("pointerdown", () => this.toggleWorld());
-      this.worldButtonLabel.setInteractive({ useHandCursor: true }).on("pointerdown", () => this.toggleWorld());
+      worldButton.on("pointerdown", () => this.openSystemMap());
+      this.worldButtonLabel.setInteractive({ useHandCursor: true }).on("pointerdown", () => this.openSystemMap());
       this.updateWorldButton();
 
       const journalButton = this.add.rectangle(640, 580, 500, 56, 0x243450, 0.98)
@@ -271,6 +271,10 @@
       this.scene.start("JournalScene");
     }
 
+    openSystemMap() {
+      this.scene.start("SystemMapScene");
+    }
+
     toggleLanguage() {
       applyLanguage(data.language === "en" ? "es" : "en");
       this.scene.restart();
@@ -282,10 +286,226 @@
       this.worldButtonLabel.setText(data.text.worldButton.replace("{world}", worldLabel));
     }
 
-    toggleWorld() {
-      selectedWorldId = selectedWorldId === "moon" ? "mars"
-        : selectedWorldId === "mars" ? "deep" : "moon";
+  }
+
+  class SystemMapScene extends Phaser.Scene {
+    constructor() {
+      super("SystemMapScene");
+    }
+
+    create() {
+      this.add.image(0, 0, art.deepMenuBackground).setOrigin(0);
+      this.add.rectangle(640, 360, 1280, 720, 0x091020, 0.62);
+      this.add.text(640, 82, data.text.mapTitle, {
+        color: "#fff8ec", fontFamily: "Georgia, Times New Roman, serif",
+        fontSize: "38px", fontStyle: "bold", align: "center",
+        wordWrap: { width: 1060 }
+      }).setOrigin(0.5);
+      this.add.text(640, 132, data.text.mapSubtitle, {
+        color: "#e5e9f2", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "20px", align: "center"
+      }).setOrigin(0.5);
+      this.add.text(640, 176, data.text.mapScaleNote, {
+        color: "#f0cd98", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", fontStyle: "bold", letterSpacing: 2, align: "center"
+      }).setOrigin(0.5);
+
+      const orbitLines = this.add.graphics().setDepth(1);
+      orbitLines.lineStyle(2, 0xa8bdd8, 0.32);
+      orbitLines.strokeEllipse(205, 368, 440, 230);
+      orbitLines.strokeEllipse(205, 368, 760, 390);
+      orbitLines.strokeEllipse(205, 368, 1110, 560);
+      this.add.circle(205, 368, 62, 0xf0cd98, 0.12).setDepth(1);
+      this.add.circle(205, 368, 42, 0xffd787, 1).setStrokeStyle(3, 0xfff0c4, 0.95)
+        .setDepth(2);
+      this.add.circle(191, 353, 11, 0xfff6d8, 0.82).setDepth(3);
+
+      const worlds = [
+        { id: "moon", x: 470, y: 330, color: 0xa8b5c8, description: data.text.mapMoonDescription },
+        { id: "mars", x: 735, y: 430, color: 0xd87955, description: data.text.mapMarsDescription },
+        { id: "deep", x: 1040, y: 305, color: 0x8b83ce, description: data.text.mapDeepDescription }
+      ];
+      this.worldNodes = worlds.map((world, index) => {
+        const halo = this.add.circle(world.x, world.y, 74, world.color, 0.12).setDepth(2);
+        const body = this.add.circle(world.x, world.y, 48, world.color, 1)
+          .setStrokeStyle(3, 0xe9e9f3, 0.82)
+          .setInteractive({ useHandCursor: true })
+          .setDepth(3);
+        this.add.circle(world.x - 14, world.y - 15, 13, 0xffffff, 0.28).setDepth(4);
+        const ring = this.add.circle(world.x, world.y, 62, 0x000000, 0)
+          .setStrokeStyle(4, 0xf0cd98, 0.96)
+          .setDepth(4);
+        const worldLabel = world.id === "moon" ? data.text.worldMoon
+          : world.id === "mars" ? data.text.worldMars : data.text.worldDeep;
+        const label = this.add.text(world.x, world.y + 82, worldLabel, {
+          color: "#fff8ec", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+          fontSize: "22px", fontStyle: "bold", align: "center",
+          wordWrap: { width: 250 }
+        }).setOrigin(0.5).setDepth(4);
+        const description = this.add.text(world.x, world.y + 112, world.description, {
+          color: "#d8ddeb", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+          fontSize: "18px", align: "center"
+        }).setOrigin(0.5).setDepth(4);
+        const node = { world, halo, body, ring, label, description };
+        const select = () => this.selectWorld(world.id);
+        body.on("pointerdown", select);
+        label.setInteractive({ useHandCursor: true }).on("pointerdown", select);
+        body.on("pointerover", () => this.setSelectedIndex(index));
+        return node;
+      });
+      this.selectedIndex = Math.max(0, worlds.findIndex((world) => world.id === selectedWorldId));
+      this.setSelectedIndex(this.selectedIndex);
+
+      this.add.text(640, 585, data.text.mapSelectHint, {
+        color: "#e5e9f2", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", align: "center", wordWrap: { width: 1100 }
+      }).setOrigin(0.5);
+      const backButton = this.add.rectangle(640, 654, 340, 50, 0x243450, 0.98)
+        .setStrokeStyle(2, 0xb9d8e4, 0.9)
+        .setInteractive({ useHandCursor: true });
+      const backLabel = this.add.text(640, 654, data.text.mapBack, {
+        color: "#f6f1e7", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", fontStyle: "bold", align: "center"
+      }).setOrigin(0.5);
+      backButton.on("pointerdown", () => this.scene.start("MenuScene"));
+      backLabel.setInteractive({ useHandCursor: true }).on("pointerdown", () => this.scene.start("MenuScene"));
+
+      this.languageButton = this.add.rectangle(1110, 42, 280, 44, 0x18223c, 0.98)
+        .setStrokeStyle(2, 0x8fa9c8, 0.9)
+        .setInteractive({ useHandCursor: true });
+      this.add.text(1110, 42, data.text.languageButton, {
+        color: "#fff1ce", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", fontStyle: "bold"
+      }).setOrigin(0.5);
+      this.languageButton.on("pointerdown", () => this.toggleLanguage());
+      this.mapKeys = this.input.keyboard.addKeys({
+        left: Phaser.Input.Keyboard.KeyCodes.LEFT,
+        right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
+        enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
+        escape: Phaser.Input.Keyboard.KeyCodes.ESC,
+        language: Phaser.Input.Keyboard.KeyCodes.L
+      });
+    }
+
+    update() {
+      if (Phaser.Input.Keyboard.JustDown(this.mapKeys.left)) this.setSelectedIndex(this.selectedIndex - 1);
+      if (Phaser.Input.Keyboard.JustDown(this.mapKeys.right)) this.setSelectedIndex(this.selectedIndex + 1);
+      if (Phaser.Input.Keyboard.JustDown(this.mapKeys.enter)) {
+        this.selectWorld(this.worldNodes[this.selectedIndex].world.id);
+      }
+      if (Phaser.Input.Keyboard.JustDown(this.mapKeys.escape)) this.scene.start("MenuScene");
+      if (Phaser.Input.Keyboard.JustDown(this.mapKeys.language)) this.toggleLanguage();
+    }
+
+    setSelectedIndex(index) {
+      this.selectedIndex = Phaser.Math.Wrap(index, 0, this.worldNodes.length);
+      this.worldNodes.forEach((node, nodeIndex) => {
+        const selected = nodeIndex === this.selectedIndex;
+        node.ring.setVisible(selected);
+        node.halo.setAlpha(selected ? 0.24 : 0.12);
+        node.body.setScale(selected ? 1.08 : 1);
+      });
+    }
+
+    selectWorld(worldId) {
+      selectedWorldId = worldId;
+      this.scene.start("MenuScene");
+    }
+
+    toggleLanguage() {
+      applyLanguage(data.language === "en" ? "es" : "en");
       this.scene.restart();
+    }
+  }
+
+  class PauseScene extends Phaser.Scene {
+    constructor() {
+      super("PauseScene");
+    }
+
+    init(sceneData) {
+      this.worldId = sceneData && sceneData.worldId ? sceneData.worldId : selectedWorldId;
+    }
+
+    create() {
+      this.add.rectangle(640, 360, 1280, 720, 0x080c18, 0.82);
+      this.add.rectangle(640, 360, 650, 505, 0x111a30, 0.99)
+        .setStrokeStyle(3, 0xe7c89b, 0.96);
+      this.add.rectangle(640, 360, 624, 479, 0x192641, 0.98)
+        .setStrokeStyle(1, 0x8298b1, 0.75);
+      this.add.text(640, 205, data.text.pauseTitle, {
+        color: "#fff8ec", fontFamily: "Georgia, Times New Roman, serif",
+        fontSize: "34px", fontStyle: "bold", align: "center",
+        wordWrap: { width: 560 }
+      }).setOrigin(0.5);
+      this.add.text(640, 250, data.text.pauseHint, {
+        color: "#d8ddeb", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", align: "center", wordWrap: { width: 560 }
+      }).setOrigin(0.5);
+      this.addPauseButton(data.text.pauseResume, 330, () => this.resumeExpedition());
+      this.addPauseButton(data.text.pauseRestart, 405, () => this.restartExpedition());
+      this.addPauseButton(data.text.pauseMenu, 480, () => this.returnToMenu());
+
+      this.languageButton = this.add.rectangle(1110, 42, 280, 44, 0x18223c, 0.98)
+        .setStrokeStyle(2, 0x8fa9c8, 0.9)
+        .setInteractive({ useHandCursor: true });
+      this.add.text(1110, 42, data.text.languageButton, {
+        color: "#fff1ce", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", fontStyle: "bold"
+      }).setOrigin(0.5);
+      this.languageButton.on("pointerdown", () => this.toggleLanguage());
+      this.pauseKeys = this.input.keyboard.addKeys({
+        escape: Phaser.Input.Keyboard.KeyCodes.ESC,
+        enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
+        restart: Phaser.Input.Keyboard.KeyCodes.R,
+        menu: Phaser.Input.Keyboard.KeyCodes.M,
+        language: Phaser.Input.Keyboard.KeyCodes.L
+      });
+    }
+
+    addPauseButton(label, y, callback) {
+      const button = this.add.rectangle(640, y, 390, 54, 0x304462, 0.98)
+        .setStrokeStyle(2, 0xb9d8e4, 0.92)
+        .setInteractive({ useHandCursor: true });
+      const buttonLabel = this.add.text(640, y, label, {
+        color: "#f6f1e7", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", fontStyle: "bold", align: "center",
+        wordWrap: { width: 350 }
+      }).setOrigin(0.5);
+      button.on("pointerover", () => button.setFillStyle(0x405a7c));
+      button.on("pointerout", () => button.setFillStyle(0x304462));
+      button.on("pointerdown", callback);
+      buttonLabel.setInteractive({ useHandCursor: true }).on("pointerdown", callback);
+    }
+
+    update() {
+      if (Phaser.Input.Keyboard.JustDown(this.pauseKeys.escape)
+        || Phaser.Input.Keyboard.JustDown(this.pauseKeys.enter)) this.resumeExpedition();
+      if (Phaser.Input.Keyboard.JustDown(this.pauseKeys.restart)) this.restartExpedition();
+      if (Phaser.Input.Keyboard.JustDown(this.pauseKeys.menu)) this.returnToMenu();
+      if (Phaser.Input.Keyboard.JustDown(this.pauseKeys.language)) this.toggleLanguage();
+    }
+
+    resumeExpedition() {
+      this.scene.stop();
+      this.scene.resume("ExpeditionScene");
+    }
+
+    restartExpedition() {
+      this.scene.stop("ExpeditionScene");
+      this.scene.start("ExpeditionScene", { worldId: this.worldId });
+    }
+
+    returnToMenu() {
+      this.scene.stop("ExpeditionScene");
+      this.scene.start("MenuScene");
+    }
+
+    toggleLanguage() {
+      applyLanguage(data.language === "en" ? "es" : "en");
+      const expedition = this.scene.get("ExpeditionScene");
+      if (expedition && typeof expedition.refreshLanguage === "function") expedition.refreshLanguage();
+      this.scene.restart({ worldId: this.worldId });
     }
   }
 
@@ -520,6 +740,14 @@
       else if (this.worldId === "deep") this.createDeepSpaceEncounters();
       else this.createLunarEncounters();
       this.createCompanions();
+      this.touchInputState = {
+        left: new Set(),
+        right: new Set(),
+        jump: new Set(),
+        interact: new Set()
+      };
+      this.touchJumpPressed = false;
+      this.touchInteractPressed = false;
       this.createHud();
       this.createParticles();
 
@@ -533,6 +761,7 @@
         space: Phaser.Input.Keyboard.KeyCodes.SPACE,
         interact: Phaser.Input.Keyboard.KeyCodes.E,
         enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
+        pause: Phaser.Input.Keyboard.KeyCodes.ESC,
         language: Phaser.Input.Keyboard.KeyCodes.L
       });
       this.jumpKeys = [this.keys.up, this.keys.w, this.keys.space];
@@ -567,8 +796,11 @@
       this.inLrvLowGravity = false;
       this.voyagerFinaleOpen = false;
       this.updateStats();
-      this.input.keyboard.on("keydown-ESC", () => this.scene.start("MenuScene"));
       this.input.keyboard.on("keydown-R", () => this.scene.restart());
+      this.input.addPointer(2);
+      this.input.on("pointerup", (pointer) => this.releaseTouchPointer(pointer.id));
+      this.input.on("pointerupoutside", (pointer) => this.releaseTouchPointer(pointer.id));
+      this.input.on("gameout", () => this.clearTouchInputs());
       if (!introShownWorlds.has(this.worldId)) {
         introShownWorlds.add(this.worldId);
         this.startDialogue("intro");
@@ -1594,10 +1826,12 @@
       }).setInteractive({ useHandCursor: true });
       sourceLink.on("pointerdown", () => window.open(station.card.source, "_blank", "noopener"));
       layer.add(sourceLink);
-      layer.add(this.add.text(640, 625, lunar.cardClose, {
+      const cardCloseText = this.add.text(640, 625, lunar.cardClose, {
         color: "#fff1ce", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "18px", fontStyle: "bold", align: "center"
-      }).setOrigin(0.5));
+      }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      cardCloseText.on("pointerdown", () => this.closeMissionCard());
+      layer.add(cardCloseText);
     }
 
     closeMissionCard() {
@@ -1639,10 +1873,12 @@
         fontSize: "22px", lineSpacing: 12, align: "center",
         wordWrap: { width: 850 }
       }).setOrigin(0.5));
-      layer.add(this.add.text(640, 568, lunar.finaleClose, {
+      const finaleCloseText = this.add.text(640, 568, lunar.finaleClose, {
         color: "#b9d8e4", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "18px", fontStyle: "bold", align: "center"
-      }).setOrigin(0.5));
+      }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      finaleCloseText.on("pointerdown", () => this.scene.start("MenuScene"));
+      layer.add(finaleCloseText);
     }
 
     addStaticPlatform(x, y, width) {
@@ -1745,6 +1981,10 @@
         stroke: "#10172a",
         strokeThickness: 4
       };
+      this.add.rectangle(420, 91, 790, 150, 0x10182c, 0.78)
+        .setStrokeStyle(2, 0x93a7c3, 0.42)
+        .setScrollFactor(0)
+        .setDepth(8);
       this.expeditionLabelText = this.add.text(28, 20,
         this.worldId === "mars" ? data.text.marsExpeditionLabel
           : this.worldId === "deep" ? data.text.deepSpaceExpeditionLabel
@@ -1752,17 +1992,30 @@
         ...fixedText, color: "#f0cd98", fontSize: "18px", letterSpacing: 2
       }).setScrollFactor(0).setDepth(10);
       this.worldTitleText = this.add.text(28, 49, lunar.title, {
-        ...fixedText, fontFamily: "Georgia, Times New Roman, serif", fontSize: "30px"
+        ...fixedText, fontFamily: "Georgia, Times New Roman, serif", fontSize: "26px",
+        wordWrap: { width: 770 }
       }).setScrollFactor(0).setDepth(10);
       this.statusText = this.add.text(28, 89, lunar.hint, {
-        ...fixedText, color: "#d8ddeb", fontSize: "18px", fontStyle: "normal"
+        ...fixedText, color: "#d8ddeb", fontSize: "18px", fontStyle: "normal",
+        wordWrap: { width: 770 }
       }).setScrollFactor(0).setDepth(10);
-      this.statsText = this.add.text(28, 130, "", {
+      this.statsText = this.add.text(28, 132, "", {
         ...fixedText, color: "#f7e4ba", fontSize: "18px"
       }).setScrollFactor(0).setDepth(10);
-      this.helpText = this.add.text(640, 675, data.text.parkourStart, {
-        ...fixedText, align: "center", fontSize: "18px", color: "#f1f0eb"
+      this.helpText = this.add.text(640, 680, data.text.touchControlsHint, {
+        ...fixedText, align: "center", fontSize: "18px", color: "#f1f0eb",
+        wordWrap: { width: 1160 }
       }).setOrigin(0.5).setScrollFactor(0).setDepth(10);
+      this.pauseButton = this.add.rectangle(884, 34, 145, 44, 0x18223c, 0.96)
+        .setStrokeStyle(2, 0x8fa9c8, 0.9)
+        .setScrollFactor(0)
+        .setDepth(12)
+        .setInteractive({ useHandCursor: true });
+      this.pauseButtonLabel = this.add.text(884, 34, data.text.pauseButton, {
+        color: "#fff1ce", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", fontStyle: "bold"
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(12);
+      this.pauseButton.on("pointerdown", () => this.pauseExpedition());
       this.languageButton = this.add.rectangle(1110, 34, 300, 44, 0x18223c, 0.96)
         .setStrokeStyle(2, 0x8fa9c8, 0.9)
         .setScrollFactor(0)
@@ -1773,6 +2026,7 @@
         fontSize: "18px", fontStyle: "bold"
       }).setOrigin(0.5).setScrollFactor(0).setDepth(12);
       this.languageButton.on("pointerdown", () => this.toggleLanguage());
+      this.createTouchControls();
       this.rhythmPanel = this.add.container(0, 0).setScrollFactor(0).setDepth(12).setVisible(false);
       this.rhythmPanel.add(this.add.rectangle(640, 465, 580, 112, 0x111a31, 0.94)
         .setStrokeStyle(2, 0xb9d8e4, 0.88));
@@ -1808,12 +2062,63 @@
       this.dialogueContinueText = this.add.text(1172, 622, data.text.dialogueContinue, {
         color: "#b9d8e4", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "18px", fontStyle: "bold", align: "right"
-      }).setOrigin(1, 0);
+      }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
+      this.dialogueContinueText.on("pointerdown", () => this.advanceDialogue());
       this.dialoguePanel.add([
         this.dialogueSpeakerText,
         this.dialogueText,
         this.dialogueContinueText
       ]);
+    }
+
+    createTouchControls() {
+      this.touchControlsLayer = this.add.container(0, 0).setScrollFactor(0).setDepth(14);
+      this.touchControlLabels = {};
+      this.touchButtons = {};
+      this.addTouchButton("left", 82, 615, data.text.touchLeft);
+      this.addTouchButton("right", 198, 615, data.text.touchRight);
+      this.addTouchButton("jump", 1058, 615, data.text.touchJump);
+      this.addTouchButton("interact", 1190, 615, data.text.touchAction);
+    }
+
+    addTouchButton(action, x, y, label) {
+      const button = this.add.rectangle(x, y, 108, 68, 0x18223c, 0.82)
+        .setStrokeStyle(2, 0xb9d8e4, 0.9)
+        .setInteractive({ useHandCursor: true });
+      const buttonLabel = this.add.text(x, y, label, {
+        color: "#fff8ec", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", fontStyle: "bold", align: "center",
+        wordWrap: { width: 98 }
+      }).setOrigin(0.5);
+      this.touchControlsLayer.add([button, buttonLabel]);
+      this.touchButtons[action] = [button, buttonLabel];
+      button.on("pointerdown", (pointer) => {
+        this.touchInputState[action].add(pointer.id);
+        if (action === "jump") this.touchJumpPressed = true;
+        if (action === "interact") this.touchInteractPressed = true;
+      });
+      button.on("pointerupoutside", (pointer) => this.releaseTouchPointer(pointer.id));
+      button.on("pointerover", () => button.setFillStyle(0x304462, 0.96));
+      button.on("pointerout", () => button.setFillStyle(0x18223c, 0.82));
+      this.touchControlLabels[action] = buttonLabel;
+    }
+
+    releaseTouchPointer(pointerId) {
+      if (!this.touchInputState) return;
+      Object.values(this.touchInputState).forEach((pointers) => pointers.delete(pointerId));
+    }
+
+    clearTouchInputs() {
+      if (!this.touchInputState) return;
+      Object.values(this.touchInputState).forEach((pointers) => pointers.clear());
+      this.touchJumpPressed = false;
+      this.touchInteractPressed = false;
+    }
+
+    pauseExpedition() {
+      this.clearTouchInputs();
+      this.scene.pause();
+      this.scene.launch("PauseScene", { worldId: this.worldId });
     }
 
     startDialogue(dialogueId) {
@@ -1888,8 +2193,13 @@
         : this.worldId === "deep" ? data.text.deepSpaceExpeditionLabel
           : data.text.expeditionLabel);
       this.worldTitleText.setText(lunar.title);
-      this.helpText.setText(data.text.parkourStart);
+      this.helpText.setText(data.text.touchControlsHint);
       this.languageButtonLabel.setText(data.text.languageButton);
+      this.pauseButtonLabel.setText(data.text.pauseButton);
+      this.touchControlLabels.left.setText(data.text.touchLeft);
+      this.touchControlLabels.right.setText(data.text.touchRight);
+      this.touchControlLabels.jump.setText(data.text.touchJump);
+      this.touchControlLabels.interact.setText(data.text.touchAction);
       this.dialogueContinueText.setText(data.text.dialogueContinue);
       this.updateStats();
 
@@ -2161,19 +2471,34 @@
     }
 
     update(time, delta) {
+      if (this.touchControlsLayer) {
+        const overlayOpen = this.dialogueOpen || this.missionCardOpen || this.voyagerFinaleOpen;
+        Object.keys(this.touchButtons).forEach((action) => {
+          this.touchButtons[action].forEach((control) => control.setVisible(!overlayOpen && !this.completed));
+        });
+      }
       if (!this.player || this.completed) return;
       const dt = Math.min(delta / 1000, 0.04);
       const body = this.player.body;
       const grounded = body.blocked.down || body.touching.down;
-      const left = this.keys.left.isDown || this.keys.a.isDown;
-      const right = this.keys.right.isDown || this.keys.d.isDown;
+      const left = this.keys.left.isDown || this.keys.a.isDown || this.touchInputState.left.size > 0;
+      const right = this.keys.right.isDown || this.keys.d.isDown || this.touchInputState.right.size > 0;
       const direction = Number(right) - Number(left);
-      const jumpPressed = this.jumpKeys.some((key) => Phaser.Input.Keyboard.JustDown(key));
-      const jumpHeld = this.jumpKeys.some((key) => key.isDown);
+      const jumpPressed = this.jumpKeys.some((key) => Phaser.Input.Keyboard.JustDown(key))
+        || this.touchJumpPressed;
+      this.touchJumpPressed = false;
+      const jumpHeld = this.jumpKeys.some((key) => key.isDown) || this.touchInputState.jump.size > 0;
       const interactPressed = Phaser.Input.Keyboard.JustDown(this.keys.interact)
-        || Phaser.Input.Keyboard.JustDown(this.keys.enter);
+        || Phaser.Input.Keyboard.JustDown(this.keys.enter)
+        || this.touchInteractPressed;
+      this.touchInteractPressed = false;
+      const pausePressed = Phaser.Input.Keyboard.JustDown(this.keys.pause);
       const languagePressed = Phaser.Input.Keyboard.JustDown(this.keys.language);
 
+      if (pausePressed) {
+        this.pauseExpedition();
+        return;
+      }
       if (languagePressed) {
         this.toggleLanguage();
         return;
@@ -2340,7 +2665,9 @@
     BootScene,
     LoadingScene,
     MenuScene,
+    SystemMapScene,
     JournalScene,
+    PauseScene,
     ExpeditionScene
   };
   const config = {
