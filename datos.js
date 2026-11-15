@@ -6,7 +6,7 @@ window.SpaceData = {
     height: 720,
     backgroundColor: "#0b1020",
     parent: "game-container",
-    scene: ["BootScene", "LoadingScene", "MenuScene", "SystemMapScene", "CreditsScene", "JournalScene", "PauseScene", "ExpeditionScene"],
+    scene: ["BootScene", "LoadingScene", "OpeningScene", "MenuScene", "SystemMapScene", "WorldTravelScene", "CreditsScene", "JournalScene", "PauseScene", "ExpeditionScene"],
     scale: {
       mode: "FIT",
       autoCenter: "CENTER_BOTH"
@@ -64,12 +64,39 @@ window.SpaceData = {
     parkourFinish: "You crossed the practice route! Tuerca is proud of your careful steps.",
     parkourRescue: "Tuerca caught you and brought you back to the last safe place.",
     parkourCheckpoint: "SAFE SIGNAL SAVED",
+    parkourProgress: "ROUTE {percent}%  •  ATTEMPTS {attempts}",
+    parkourTryAgain: "Almost! Try again!",
     parkourStars: "ECHO STARS",
     parkourBatteries: "BATTERIES",
     parkourLowGravity: "LOW GRAVITY",
     parkourHintWall: "Wall jump: press jump while touching a wall.",
     parkourHintDouble: "Press jump again in the air for a backpack boost.",
     parkourReturn: "ESC  MAIN MENU",
+    openingSignal: "…is anyone… still out there?",
+    openingReply: "Who's there?",
+    openingBeep: "PI... PI...",
+    openingSkipHint: "PRESS ANY KEY OR TAP TO SKIP",
+    echoesRecovered: "ECHOES RECOVERED: {count}/{total}",
+    hiddenMessageLabel: "HIDDEN MESSAGE",
+    hiddenMessageHiddenWord: "____",
+    hiddenMessageWords: {
+      lm: "We",
+      lrv: "were",
+      alsep: "never",
+      surveyor: "forgotten.",
+      pathfinder: "Thank",
+      rovers: "you",
+      viking: "for",
+      insight: "listening.",
+      ingenuity: "Tell",
+      dawn: "Earth",
+      near: "we",
+      pioneer: "are",
+      kepler: "still",
+      voyager: "here."
+    },
+    missionEchoWord: "MESSAGE WORD: {word}",
+    hiddenMessageFull: "We were never forgotten. Thank you for listening. Tell Earth we are still here.",
     controlsMenu: "MOVE  A / D  or  ← / →     JUMP  SPACE / W / ↑",
     return: "RETURN TO THE TITLE",
     signalError: "The expedition could not be loaded. Please refresh the page and try again.",
@@ -82,6 +109,20 @@ window.SpaceData = {
     journalResetCancel: "CANCEL",
     journalResetSuccess: "Journal reset.",
     journalResetError: "Could not reset the journal on this device.",
+    missionSnapshotTitle: "MISSION SNAPSHOT",
+    missionQuickWhat: "WHAT I WAS",
+    missionQuickWhy: "WHY I WENT",
+    missionQuickDid: "WHAT I DID",
+    missionQuickState: "STATUS",
+    missionRevealHint: "TAP OR PRESS E TO REVEAL THE NEXT LINE",
+    missionMoreInfo: "MORE INFO",
+    missionContinue: "CONTINUE",
+    missionBack: "BACK TO SNAPSHOT",
+    missionNext: "NEXT",
+    missionPrevious: "PREVIOUS",
+    missionPage: "MORE INFO — PAGE {page} / 2",
+    missionOfficialNASA: "OFFICIAL NASA PAGE",
+    missionJournalBack: "BACK TO THE JOURNAL",
     journalTitle: "THE ECOSCOPE JOURNAL",
     journalCount: "RECOVERED MISSION CARDS: {count} / {total}",
     journalEmpty: "No mission cards yet. Visit a station on the Moon, Mars, or deep space and listen to its story.",
@@ -114,11 +155,23 @@ window.SpaceData = {
     mapMarsDescription: "5 mission signals",
     mapDeepDescription: "5 mission signals",
     mapSelectHint: "Select a world with the pointer or LEFT/RIGHT + ENTER.",
+    travelShipName: "LA COMETA",
+    travelEarthLabel: "EARTH",
+    travelArrival: "ARRIVING AT {world}",
+    travelSkipHint: "TAP OR PRESS ANY KEY TO SKIP",
+    travelDialogue: {
+      moon: "Maia: The Moon is our first quiet signal.",
+      mars: "Maia: Red dunes ahead. Let's follow the explorers' tracks.",
+      deep: "Tuerca: That faraway glow is our next signal."
+    },
     mapBack: "RETURN TO THE MENU",
     pauseTitle: "EXPEDITION PAUSED",
     pauseHint: "P: resume journey     ESC: return to the main menu",
     pauseRestart: "RESTART THIS WORLD",
     pauseMenu: "RETURN TO THE MENU",
+    pauseHelpMode: "HELP MODE: {state}",
+    pauseHelpOn: "ON",
+    pauseHelpOff: "OFF",
     touchLeft: "LEFT",
     touchRight: "RIGHT",
     touchJump: "JUMP",
@@ -567,6 +620,213 @@ window.SpaceData = {
   const englishLunar = data.lunarWorld;
   const englishMars = data.marsWorld;
   const englishDeepSpace = data.deepSpaceWorld;
+  const missionQuickCards = {
+    en: {
+      lm: {
+        hook: "I carried two astronauts to the Moon.",
+        what: "A two-stage lunar lander.",
+        why: "My lower stage stayed as a launch pad.",
+        did: "I landed Armstrong and Aldrin.",
+        state: "Resting on the Moon."
+      },
+      lrv: {
+        hook: "I helped astronauts explore beyond their lander.",
+        what: "An electric lunar rover.",
+        why: "I carried a crew across the lunar surface.",
+        did: "Apollo 15 traveled 27.9 kilometers with me.",
+        state: "Left on the Moon."
+      },
+      alsep: {
+        hook: "I listened to moonquakes and sent data to Earth.",
+        what: "A network of lunar science instruments.",
+        why: "I studied moonquakes and the Moon's surroundings.",
+        did: "My radio relayed measurements to Earth.",
+        state: "Switched off in 1977."
+      },
+      surveyor: {
+        hook: "I tested gentle landings before Apollo arrived.",
+        what: "A robotic lunar lander.",
+        why: "I checked whether lunar soil could support a lander.",
+        did: "My scoop dug soil and my camera sent pictures.",
+        state: "Recovered parts studied on Earth."
+      },
+      pathfinder: {
+        hook: "I bounced onto Mars with Sojourner.",
+        what: "A lander carrying a small rover.",
+        why: "I tested a new way to land on Mars.",
+        did: "Airbags softened my landing; Sojourner explored nearby.",
+        state: "Mission ended in 1997."
+      },
+      rovers: {
+        hook: "We searched Mars for signs of ancient water.",
+        what: "Two solar-powered Mars rovers.",
+        why: "We explored rocks and soil across Mars.",
+        did: "We found evidence of long-lasting ancient water.",
+        state: "Both missions have ended."
+      },
+      viking: {
+        hook: "I explored Mars from orbit and the ground.",
+        what: "An orbiter and a lander.",
+        why: "I searched Mars and tested soil for possible life.",
+        did: "My arm placed Martian soil inside science instruments.",
+        state: "Lander stopped working in 1982."
+      },
+      insight: {
+        hook: "I listened to Mars tremble below the surface.",
+        what: "A stationary Mars lander.",
+        why: "I studied how rocky planets form and change.",
+        did: "My seismometer recorded waves from marsquakes and impacts.",
+        state: "Mission ended in 2022."
+      },
+      ingenuity: {
+        hook: "I flew through Mars' thin air.",
+        what: "A small Mars helicopter.",
+        why: "I tested powered flight on another planet.",
+        did: "I completed 72 flights beside Perseverance.",
+        state: "Mission ended in 2024."
+      },
+      dawn: {
+        hook: "I visited Vesta and Ceres.",
+        what: "An interplanetary spacecraft and orbiter.",
+        why: "I studied two different asteroid-belt worlds.",
+        did: "I orbited Vesta and Ceres.",
+        state: "NASA lists the mission as successful."
+      },
+      near: {
+        hook: "I orbited Eros, then landed gently.",
+        what: "A spacecraft that visited asteroid Eros.",
+        why: "I studied Eros' shape, minerals, and magnetic field.",
+        did: "I mapped much of Eros and sent about 160,000 images.",
+        state: "Last contact: February 2001."
+      },
+      pioneer: {
+        hook: "I carried a message as I flew past Jupiter.",
+        what: "A spacecraft with a message plaque.",
+        why: "I explored Jupiter and traveled outward.",
+        did: "I was first to fly past Jupiter.",
+        state: "Last signal: January 2003."
+      },
+      kepler: {
+        hook: "I watched stars for tiny planet shadows.",
+        what: "A space telescope for finding planets.",
+        why: "I searched stars for Earth-sized planets.",
+        did: "Kepler and K2 revealed thousands of exoplanets.",
+        state: "Retired in 2018; safely orbiting."
+      },
+      voyager: {
+        hook: "We flew past giant planets and kept traveling.",
+        what: "Two spacecraft exploring the outer Solar System.",
+        why: "We explored distant planets and continued outward.",
+        did: "We are the only spacecraft operating beyond the heliosphere.",
+        state: "Still traveling beyond the Sun's bubble."
+      }
+    },
+    es: {
+      lm: {
+        hook: "Llevé a dos astronautas hasta la Luna.",
+        what: "Un módulo lunar de dos etapas.",
+        why: "Mi etapa inferior quedó como plataforma de despegue.",
+        did: "Aterricé a Armstrong y Aldrin.",
+        state: "Descansa en la Luna."
+      },
+      lrv: {
+        hook: "Ayudé a explorar más lejos del módulo lunar.",
+        what: "Un rover lunar eléctrico.",
+        why: "Llevé astronautas por la superficie lunar.",
+        did: "El Apollo 15 recorrió 27,9 km conmigo.",
+        state: "Quedé en la Luna."
+      },
+      alsep: {
+        hook: "Escuché lunamotos y envié datos a la Tierra.",
+        what: "Un conjunto de instrumentos científicos lunares.",
+        why: "Estudié lunamotos y el entorno de la Luna.",
+        did: "Mi radio transmitió mediciones a la Tierra.",
+        state: "Apagado en 1977."
+      },
+      surveyor: {
+        hook: "Probé aterrizajes suaves antes de la llegada del Apollo.",
+        what: "Una sonda robótica lunar.",
+        why: "Comprobé si el suelo lunar sostenía un módulo.",
+        did: "Mi pala probó el suelo y mi cámara envió imágenes.",
+        state: "Partes recuperadas para estudiarlas en la Tierra."
+      },
+      pathfinder: {
+        hook: "Reboté sobre Marte junto a Sojourner.",
+        what: "Un módulo de aterrizaje que llevó un rover.",
+        why: "Probé una nueva forma de aterrizar en Marte.",
+        did: "Bolsas de aire suavizaron mi aterrizaje.",
+        state: "Misión terminada en 1997."
+      },
+      rovers: {
+        hook: "Buscamos señales de agua antigua en Marte.",
+        what: "Dos rovers marcianos con energía solar.",
+        why: "Exploramos rocas y suelo marcianos.",
+        did: "Hallamos pruebas de agua antigua y duradera.",
+        state: "Ambas misiones terminaron."
+      },
+      viking: {
+        hook: "Exploré Marte desde la órbita y la superficie.",
+        what: "Un orbitador y un módulo de aterrizaje.",
+        why: "Busqué pistas sobre Marte y posible vida.",
+        did: "Mi brazo puso suelo marciano en instrumentos científicos.",
+        state: "El módulo dejó de funcionar en 1982."
+      },
+      insight: {
+        hook: "Escuché temblar a Marte bajo la superficie.",
+        what: "Una sonda estacionaria marciana.",
+        why: "Estudié cómo se forman y cambian los planetas rocosos.",
+        did: "Mi sismómetro registró ondas de temblores e impactos.",
+        state: "Misión terminada en 2022."
+      },
+      ingenuity: {
+        hook: "Volé por el aire tenue de Marte.",
+        what: "Un pequeño helicóptero marciano.",
+        why: "Probé el vuelo motorizado en otro planeta.",
+        did: "Realicé 72 vuelos junto a Perseverance.",
+        state: "Misión terminada en 2024."
+      },
+      dawn: {
+        hook: "Visité Vesta y Ceres.",
+        what: "Una nave interplanetaria que orbitó dos mundos.",
+        why: "Estudié dos cuerpos distintos del cinturón de asteroides.",
+        did: "Orbitó Vesta y Ceres.",
+        state: "NASA indica que la misión fue exitosa."
+      },
+      near: {
+        hook: "Orbité Eros y después aterricé suavemente.",
+        what: "Una nave que visitó el asteroide Eros.",
+        why: "Estudié su forma, minerales y campo magnético.",
+        did: "Cartografié Eros y envié unas 160.000 imágenes.",
+        state: "Último contacto: febrero de 2001."
+      },
+      pioneer: {
+        hook: "Llevé un mensaje al pasar junto a Júpiter.",
+        what: "Una nave con una placa de mensaje.",
+        why: "Exploré Júpiter y viajé hacia el exterior.",
+        did: "Fui la primera nave que sobrevoló Júpiter.",
+        state: "Última señal: enero de 2003."
+      },
+      kepler: {
+        hook: "Observé estrellas buscando sombras pequeñas de planetas.",
+        what: "Un telescopio espacial que buscó planetas.",
+        why: "Busqué planetas del tamaño de la Tierra.",
+        did: "Kepler y K2 revelaron miles de exoplanetas.",
+        state: "Retirado en 2018; sigue en órbita segura."
+      },
+      voyager: {
+        hook: "Volamos junto a planetas gigantes y seguimos viajando.",
+        what: "Dos naves que exploraron el Sistema Solar exterior.",
+        why: "Exploramos planetas lejanos y seguimos hacia afuera.",
+        did: "Somos las únicas naves que operan fuera de la heliosfera.",
+        state: "Seguimos más allá de la burbuja solar."
+      }
+    }
+  };
+  [englishLunar, englishMars, englishDeepSpace].forEach((world) => {
+    world.stations.forEach((station) => {
+      station.card.quick = missionQuickCards.en[station.id];
+    });
+  });
   const spanish = {
     text: {
       loadError: "El juego no pudo iniciarse. Comprueba tu conexión y que Phaser pueda cargarse desde el CDN; luego, vuelve a intentarlo.",
@@ -592,12 +852,39 @@ window.SpaceData = {
       parkourFinish: "¡Cruzaste la ruta de práctica! Tuerca está orgulloso de tus pasos cuidadosos.",
       parkourRescue: "Tuerca te atrapó y te llevó de vuelta al último lugar seguro.",
       parkourCheckpoint: "SEÑAL SEGURA GUARDADA",
+      parkourProgress: "RUTA {percent}%  •  INTENTOS {attempts}",
+      parkourTryAgain: "¡Casi! ¡Otra vez!",
       parkourStars: "ESTRELLAS DE ECO",
       parkourBatteries: "BATERÍAS",
       parkourLowGravity: "BAJA GRAVEDAD",
       parkourHintWall: "Salto en pared: pulsa saltar mientras tocas una pared.",
       parkourHintDouble: "Pulsa saltar otra vez en el aire para activar la mochila.",
       parkourReturn: "ESC  MENÚ PRINCIPAL",
+      openingSignal: "…¿hay alguien… todavía ahí fuera?",
+      openingReply: "¿Quién está ahí?",
+      openingBeep: "PI... PI...",
+      openingSkipHint: "PULSA CUALQUIER TECLA O TOCA PARA SALTAR",
+      echoesRecovered: "ECOS RECUPERADOS: {count}/{total}",
+      hiddenMessageLabel: "MENSAJE OCULTO",
+      hiddenMessageHiddenWord: "____",
+      hiddenMessageWords: {
+        lm: "Nunca",
+        lrv: "nos",
+        alsep: "olvidaron.",
+        surveyor: "Gracias",
+        pathfinder: "por",
+        rovers: "escucharnos.",
+        viking: "Díganle",
+        insight: "a",
+        ingenuity: "la",
+        dawn: "Tierra",
+        near: "que",
+        pioneer: "todavía",
+        kepler: "seguimos",
+        voyager: "aquí."
+      },
+      missionEchoWord: "PALABRA DEL MENSAJE: {word}",
+      hiddenMessageFull: "Nunca nos olvidaron. Gracias por escucharnos. Díganle a la Tierra que todavía seguimos aquí.",
       controlsMenu: "MOVER  A / D  o  ← / →     SALTAR  ESPACIO / W / ↑",
       return: "VOLVER AL TÍTULO",
       signalError: "No se pudo cargar la expedición. Actualiza la página e inténtalo de nuevo.",
@@ -610,6 +897,20 @@ window.SpaceData = {
       journalResetCancel: "CANCELAR",
       journalResetSuccess: "Diario reiniciado.",
       journalResetError: "No se pudo reiniciar el diario en este dispositivo.",
+      missionSnapshotTitle: "RESUMEN DE MISIÓN",
+      missionQuickWhat: "QUÉ ERA",
+      missionQuickWhy: "POR QUÉ VIAJÉ",
+      missionQuickDid: "QUÉ HICE",
+      missionQuickState: "ESTADO",
+      missionRevealHint: "TOCA O PULSA E PARA VER LA SIGUIENTE FRASE",
+      missionMoreInfo: "MÁS INFO",
+      missionContinue: "CONTINUAR",
+      missionBack: "VOLVER AL RESUMEN",
+      missionNext: "SIGUIENTE",
+      missionPrevious: "ANTERIOR",
+      missionPage: "MÁS INFO — PÁGINA {page} / 2",
+      missionOfficialNASA: "PÁGINA OFICIAL DE NASA",
+      missionJournalBack: "VOLVER AL DIARIO",
       journalTitle: "DIARIO DEL ECOSCOPIO",
       journalCount: "FICHAS DE MISIÓN RECUPERADAS: {count} / {total}",
       journalEmpty: "Aún no hay fichas. Visita una estación en la Luna, Marte o el espacio profundo y escucha su historia.",
@@ -642,11 +943,23 @@ window.SpaceData = {
       mapMarsDescription: "5 señales de misión",
       mapDeepDescription: "5 señales de misión",
       mapSelectHint: "Elige un mundo con el puntero o IZQUIERDA/DERECHA + ENTER.",
+      travelShipName: "LA COMETA",
+      travelEarthLabel: "TIERRA",
+      travelArrival: "LLEGANDO A {world}",
+      travelSkipHint: "TOCA O PULSA CUALQUIER TECLA PARA SALTAR",
+      travelDialogue: {
+        moon: "Maia: La Luna es nuestra primera señal silenciosa.",
+        mars: "Maia: Se acercan dunas rojas. Sigamos las huellas de los exploradores.",
+        deep: "Tuerca: Ese brillo lejano es nuestra próxima señal."
+      },
       mapBack: "VOLVER AL MENÚ",
       pauseTitle: "EXPEDICIÓN EN PAUSA",
       pauseHint: "P: continuar el viaje     ESC: volver al menú principal",
       pauseRestart: "REINICIAR ESTE MUNDO",
       pauseMenu: "VOLVER AL MENÚ",
+      pauseHelpMode: "MODO AYUDA: {state}",
+      pauseHelpOn: "ACTIVADO",
+      pauseHelpOff: "DESACTIVADO",
       touchLeft: "IZQUIERDA",
       touchRight: "DERECHA",
       touchJump: "SALTAR",
@@ -1035,7 +1348,11 @@ window.SpaceData = {
         stations: englishLunar.stations.map((station) => ({
           ...station,
           ...spanish.stations[station.id],
-          card: { ...station.card, ...spanish.stations[station.id].card }
+          card: {
+            ...station.card,
+            ...spanish.stations[station.id].card,
+            quick: missionQuickCards.es[station.id]
+          }
         }))
       };
       this.marsWorld = {
@@ -1045,7 +1362,11 @@ window.SpaceData = {
         stations: englishMars.stations.map((station) => ({
           ...station,
           ...spanish.marsWorld.stations[station.id],
-          card: { ...station.card, ...spanish.marsWorld.stations[station.id].card }
+          card: {
+            ...station.card,
+            ...spanish.marsWorld.stations[station.id].card,
+            quick: missionQuickCards.es[station.id]
+          }
         }))
       };
       this.deepSpaceWorld = {
@@ -1055,7 +1376,11 @@ window.SpaceData = {
         stations: englishDeepSpace.stations.map((station) => ({
           ...station,
           ...spanish.deepSpaceWorld.stations[station.id],
-          card: { ...station.card, ...spanish.deepSpaceWorld.stations[station.id].card }
+          card: {
+            ...station.card,
+            ...spanish.deepSpaceWorld.stations[station.id].card,
+            quick: missionQuickCards.es[station.id]
+          }
         }))
       };
     } else {
