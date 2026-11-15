@@ -135,3 +135,11 @@ Ejemplo de ficha rápida (Apollo 11, Eagle):
 - Por qué se quedó: "My lower half stayed behind as a launch pad."
 - Qué hizo: "I set Armstrong and Aldrin down on the Moon."
 - Estado: "Resting on the Moon".
+### 12.8 CAMBIO DE HISTORIA (manda sobre la sección 3 y sobre 12.1 si hay conflicto)
+- El "Ecoscopio" ya no existe. Ahora Maia lleva un "Walkie-Talkie espacial" (EN: "Space Walkie-Talkie"), una radio de mano que capta las transmisiones débiles ("ecos") de los equipos de la NASA que quedaron atrás. Los "ecos" y el mensaje oculto de 14 palabras NO cambian: son los fragmentos de historia que Maia reencuentra.
+- Abuela Elena es una experta en la NASA y sus misiones, con un taller lleno de equipamiento y réplicas (sin logos de la NASA). Guía a Maia por radio, le da datos reales y ánimo. Los datos solo salen de las fuentes de la sección 4. Su frase: "Escuchar es la mitad de explorar".
+- Misión de Maia: redescubrir y reencontrar artefactos y reliquias de la NASA que alguna vez se usaron en misiones, y reencontrar fragmentos de la historia.
+- Apertura (reemplaza la de 12.1): el walkie-talkie cruje. Elena: "Maia, ¿me copiás? Capté una señal muy débil de la NASA…" (EN: "Maia, do you copy? I'm picking up a very faint NASA signal…"). Una voz lejana dice: "…is anyone… still out there?". Maia: "Who's there?". Corte al juego.
+- Elena aparece con una frase corta por radio al inicio de cada mundo.
+- Renombrar en todo el juego (textos, fichas, créditos, diario, README): "Ecoscopio/Ecoscope" pasa a "Walkie-Talkie espacial/Space Walkie-Talkie", y "Diario del Ecoscopio" pasa a "Diario de Elena" (EN: "Elena's Logbook").
+- No tocar mecánicas.

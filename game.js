@@ -1580,7 +1580,7 @@
         marker.checkpointX = x;
         marker.isHelpCheckpoint = Boolean(help);
         marker.body.enable = !help || this.helpModeEnabled;
-        marker.helpLabel = this.add.text(x, 500, data.text.parkourCheckpoint, {
+        marker.helpLabel = this.add.text(x, 500, data.text.parkourCheckpointMarker, {
           color: "#f7e4ba", fontSize: "18px", fontStyle: "bold",
           fontFamily: "Trebuchet MS, Segoe UI, sans-serif"
         }).setOrigin(0.5).setVisible(!help || this.helpModeEnabled);
@@ -2801,12 +2801,17 @@
       this.progressText = this.add.text(28, 148, "", {
         ...fixedText, fontSize: "18px", color: "#f6dfaa"
       }).setScrollFactor(0).setDepth(10);
-      this.progressBarWidth = 340;
-      this.add.rectangle(615, 157, this.progressBarWidth, 12, 0x29354f, 0.76)
+      this.attemptsText = this.add.text(150, 148, "", {
+        ...fixedText, fontSize: "18px", color: "#f6dfaa"
+      }).setScrollFactor(0).setDepth(10);
+      this.progressBarX = 320;
+      this.progressBarWidth = 450;
+      this.add.rectangle(this.progressBarX + this.progressBarWidth / 2, 158,
+        this.progressBarWidth, 12, 0x29354f, 0.76)
         .setStrokeStyle(1, worldAccent, 0.5)
         .setScrollFactor(0)
         .setDepth(10);
-      this.progressFill = this.add.rectangle(445, 157, 1, 7, worldAccent, 0.92)
+      this.progressFill = this.add.rectangle(this.progressBarX, 158, 1, 7, worldAccent, 0.92)
         .setOrigin(0, 0.5)
         .setScrollFactor(0)
         .setDepth(11);
@@ -2881,12 +2886,14 @@
     }
 
     createTouchControls() {
+      if (!this.sys.game.device.input.touch) return;
+      this.helpText.setVisible(false);
       this.touchControlsLayer = this.add.container(0, 0).setScrollFactor(0).setDepth(14);
       this.touchButtons = {};
-      this.addTouchButton("left", 72, 622);
-      this.addTouchButton("right", 182, 622);
-      this.addTouchButton("jump", 1090, 622);
-      this.addTouchButton("interact", 1202, 622);
+      this.addTouchButton("left", 72, 680);
+      this.addTouchButton("right", 182, 680);
+      this.addTouchButton("jump", 1090, 680);
+      this.addTouchButton("interact", 1202, 680);
       this.touchButtons.interact.forEach((control) => control.setVisible(false));
     }
 
@@ -3067,7 +3074,7 @@
         this.stationLabels[station.id].setText(station.title);
       });
       this.checkpointMarkers.forEach((marker) => {
-        marker.helpLabel.setText(data.text.parkourCheckpoint);
+        marker.helpLabel.setText(data.text.parkourCheckpointMarker);
       });
       this.nearStation = nearbyId ? this.getStation(nearbyId) : null;
       this.expeditionLabelText.setText(this.worldId === "mars"
@@ -3349,12 +3356,13 @@
     }
 
     updateRouteProgress() {
-      if (!this.progressText || !this.progressFill || !this.player) return;
+      if (!this.progressText || !this.attemptsText || !this.progressFill || !this.player) return;
       const routeEnd = this.goal ? this.goal.x : this.parkour.worldWidth - 115;
       const progress = this.completed ? 1
         : Phaser.Math.Clamp((this.player.x - 90) / (routeEnd - 90), 0, 1);
-      this.progressText.setText(data.text.parkourProgress
-        .replace("{percent}", String(Math.round(progress * 100)))
+      this.progressText.setText(data.text.parkourRoute
+        .replace("{percent}", String(Math.round(progress * 100))));
+      this.attemptsText.setText(data.text.parkourAttempts
         .replace("{attempts}", String(this.attempts)));
       this.progressFill.setDisplaySize(Math.max(1, this.progressBarWidth * progress), 7);
     }
