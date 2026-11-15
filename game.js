@@ -94,6 +94,227 @@
     }
   }
 
+  const missionArt = {
+    lm: [art.lunarModule, 220, 275],
+    lrv: [art.lunarRover, 270, 153],
+    alsep: [art.alsep, 216, 171],
+    surveyor: [art.surveyor, 190, 174],
+    pathfinder: [art.pathfinder, 230, 215],
+    rovers: [art.marsRovers, 260, 160],
+    viking: [art.viking, 230, 205],
+    insight: [art.insight, 255, 190],
+    ingenuity: [art.ingenuity, 185, 185],
+    dawn: [art.dawn, 250, 178],
+    near: [art.near, 230, 180],
+    pioneer: [art.pioneer, 240, 190],
+    kepler: [art.kepler, 230, 180],
+    voyager: [art.voyager, 250, 190]
+  };
+
+  function isNarrowMissionView(scene) {
+    const size = scene.scale.parentSize;
+    return Boolean(size && (size.width < 760 || size.height > size.width));
+  }
+
+  function addMissionFactIcon(scene, row, kind, x, y) {
+    const icon = scene.add.graphics().setPosition(x, y);
+    icon.lineStyle(3, kind === "why" ? 0xf0cd98 : kind === "did" ? 0xd7a5ed : 0x8fe6ef, 0.96);
+    if (kind === "what") {
+      icon.strokeRoundedRect(-15, -12, 30, 24, 5);
+      icon.strokeCircle(0, 0, 4);
+    } else if (kind === "why") {
+      icon.strokeCircle(-3, 3, 11);
+      icon.lineBetween(5, -5, 15, -15);
+      icon.lineBetween(11, -15, 15, -15);
+      icon.lineBetween(15, -15, 15, -11);
+    } else {
+      icon.lineBetween(-14, 0, 14, 0);
+      icon.lineBetween(0, -14, 0, 14);
+      icon.lineBetween(-10, -10, 10, 10);
+      icon.lineBetween(-10, 10, 10, -10);
+    }
+    row.add(icon);
+  }
+
+  function addQuickMissionContent(scene, layer, station, options) {
+    const quick = station.card.quick;
+    if (!quick) throw new Error(`Missing quick mission card: ${station.id}`);
+    const narrow = options.narrow;
+    const animate = options.animate;
+    const artInfo = missionArt[station.id];
+    if (!artInfo) throw new Error(`Missing mission artwork: ${station.id}`);
+    const [texture, sourceWidth, sourceHeight] = artInfo;
+    const titleY = options.titleY;
+    layer.add(scene.add.text(640, titleY, station.title, {
+      color: "#fff8ec",
+      fontFamily: "Georgia, Times New Roman, serif",
+      fontSize: "28px",
+      fontStyle: "bold",
+      align: "center",
+      wordWrap: { width: 1040 }
+    }).setOrigin(0.5));
+
+    const imageX = narrow ? 640 : 265;
+    const imageY = narrow ? 235 : 365;
+    const maxImageWidth = narrow ? 190 : 290;
+    const maxImageHeight = narrow ? 130 : 265;
+    const glow = scene.add.circle(imageX, imageY, narrow ? 96 : 135, 0x7ceeff, 0.12)
+      .setStrokeStyle(3, 0x9fe5e1, 0.58);
+    const image = scene.add.image(imageX, imageY, texture);
+    image.setScale(Math.min(maxImageWidth / sourceWidth, maxImageHeight / sourceHeight));
+    layer.add([glow, image]);
+
+    const hookX = narrow ? 640 : 485;
+    const hookY = narrow ? 315 : 205;
+    layer.add(scene.add.text(hookX, hookY, `"${quick.hook}"`, {
+      color: "#f6dfaa",
+      fontFamily: "Georgia, Times New Roman, serif",
+      fontSize: narrow ? "23px" : "25px",
+      fontStyle: "bold",
+      align: narrow ? "center" : "left",
+      wordWrap: { width: narrow ? 1010 : 650 }
+    }).setOrigin(narrow ? 0.5 : 0, 0));
+
+    const facts = [
+      { kind: "what", label: data.text.missionQuickWhat, text: quick.what },
+      { kind: "why", label: data.text.missionQuickWhy, text: quick.why },
+      { kind: "did", label: data.text.missionQuickDid, text: quick.did }
+    ];
+    const rowY = narrow ? [360, 420, 480] : [285, 380, 475];
+    const rows = facts.map((fact, index) => {
+      const row = scene.add.container(0, 0);
+      const iconX = narrow ? 205 : 510;
+      const textX = narrow ? 245 : 550;
+      addMissionFactIcon(scene, row, fact.kind, iconX, rowY[index] + 25);
+      row.add(scene.add.text(textX, rowY[index], fact.label, {
+        color: "#9fe5e1",
+        fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "20px",
+        fontStyle: "bold",
+        letterSpacing: 1
+      }));
+      row.add(scene.add.text(textX, rowY[index] + 26, fact.text, {
+        color: "#e5e9f2",
+        fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "20px",
+        lineSpacing: 3,
+        wordWrap: { width: narrow ? 830 : 625 }
+      }));
+      row.setVisible(!animate);
+      layer.add(row);
+      return row;
+    });
+
+    const stateX = narrow ? 640 : 820;
+    const stateWidth = narrow ? 800 : 510;
+    const state = scene.add.container(stateX, options.stateY || 578);
+    state.add(scene.add.rectangle(0, 0, stateWidth, 58, 0x235b5c, 0.78)
+      .setStrokeStyle(2, 0x9fe5e1, 0.7));
+    state.add(scene.add.text(0, 0, `${data.text.missionQuickState}: ${quick.state}`, {
+      color: "#f1fff8",
+      fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+      fontSize: "17px",
+      fontStyle: "bold",
+      align: "center",
+      wordWrap: { width: stateWidth - 24 }
+    }).setOrigin(0.5).setY(-13));
+    const echoWord = data.text.hiddenMessageWords[station.id];
+    if (!echoWord) throw new Error(`Missing hidden-message word: ${station.id}`);
+    const echoWordText = scene.add.text(0, 15, data.text.missionEchoWord
+      .replace("{word}", echoWord), {
+      color: "#f6dfaa",
+      fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+      fontSize: "17px",
+      fontStyle: "bold",
+      align: "center",
+      wordWrap: { width: stateWidth - 24 }
+    }).setOrigin(0.5);
+    state.add(echoWordText);
+    state.setVisible(!animate);
+    layer.add(state);
+    return { rows, state, echoWordText };
+  }
+
+  function addMissionActionButton(scene, layer, label, x, y, width, callback, primary) {
+    const button = scene.add.rectangle(x, y, width, 52,
+      primary ? 0x1b819b : 0x153d59, primary ? 0.72 : 0.56)
+      .setStrokeStyle(2, primary ? 0x91f5ff : 0x6fe7ff, 0.82)
+      .setInteractive({ useHandCursor: true });
+    const text = scene.add.text(x, y, label, {
+      color: "#f5fcff",
+      fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+      fontSize: "20px",
+      fontStyle: "bold",
+      align: "center",
+      wordWrap: { width: width - 18 }
+    }).setOrigin(0.5);
+    button.on("pointerover", () => button.setFillStyle(
+      primary ? 0x1b819b : 0x17617a, primary ? 0.9 : 0.78
+    ));
+    button.on("pointerout", () => button.setFillStyle(
+      primary ? 0x1b819b : 0x153d59, primary ? 0.72 : 0.56
+    ));
+    button.on("pointerdown", callback);
+    text.setInteractive({ useHandCursor: true }).on("pointerdown", callback);
+    layer.add([button, text]);
+  }
+
+  function addMissionLongInfo(scene, layer, station, page, options) {
+    const narrow = options.narrow;
+    const titleY = options.titleY;
+    layer.add(scene.add.text(640, titleY, station.title, {
+      color: "#fff8ec",
+      fontFamily: "Georgia, Times New Roman, serif",
+      fontSize: "26px",
+      fontStyle: "bold",
+      align: "center",
+      wordWrap: { width: 1040 }
+    }).setOrigin(0.5));
+    layer.add(scene.add.text(640, titleY + 34, data.text.missionPage
+      .replace("{page}", String(page + 1)), {
+      color: "#9fe5e1",
+      fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+      fontSize: "20px",
+      fontStyle: "bold",
+      align: "center"
+    }).setOrigin(0.5));
+
+    const columns = narrow
+      ? [page === 0 ? ["what", "why", "how"] : ["learned", "today"]]
+      : page === 0 ? [["what", "why"], ["how"]] : [["learned"], ["today"]];
+    const xPositions = narrow ? [100] : [85, 655];
+    const columnWidth = narrow ? 1080 : 530;
+    columns.forEach((keys, columnIndex) => {
+      let y = titleY + 72;
+      keys.forEach((key) => {
+        layer.add(scene.add.text(xPositions[columnIndex], y, lunar.cardLabels[key], {
+          color: "#9fe5e1",
+          fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+          fontSize: "20px",
+          fontStyle: "bold",
+          letterSpacing: 1
+        }));
+        const body = scene.add.text(xPositions[columnIndex], y + 27, station.card[key], {
+          color: "#e5e9f2",
+          fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+          fontSize: "20px",
+          lineSpacing: 4,
+          wordWrap: { width: columnWidth }
+        });
+        layer.add(body);
+        y += 38 + body.height + 24;
+      });
+    });
+
+    if (page === 1) {
+      const sourceY = 530;
+      addMissionActionButton(scene, layer, data.text.missionOfficialNASA,
+        985, sourceY, 350, () => {
+          window.open(station.card.source, "_blank", "noopener");
+        }, false);
+    }
+  }
+
   if (!window.Phaser) {
     errorPanel.textContent = data.text.loadError;
     errorPanel.hidden = false;
@@ -141,7 +362,83 @@
         repeat: -1
       });
       this.input.keyboard.once("keydown-ESC", () => this.scene.start("MenuScene"));
-      this.time.delayedCall(350, () => this.scene.start("MenuScene"));
+      this.time.delayedCall(350, () => this.scene.start("OpeningScene"));
+    }
+  }
+
+  class OpeningScene extends Phaser.Scene {
+    constructor() {
+      super("OpeningScene");
+    }
+
+    create() {
+      this.cameras.main.setBackgroundColor("#000000");
+      this.openingComplete = false;
+      this.signalText = this.add.text(640, 250, data.text.openingBeep, {
+        color: "#b9d8e4",
+        fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "24px",
+        fontStyle: "bold",
+        letterSpacing: 5
+      }).setOrigin(0.5).setAlpha(0);
+      this.questionText = this.add.text(640, 330, data.text.openingSignal, {
+        color: "#fff8ec",
+        fontFamily: "Georgia, Times New Roman, serif",
+        fontSize: "34px",
+        align: "center",
+        wordWrap: { width: 1000 }
+      }).setOrigin(0.5).setAlpha(0);
+      this.replyText = this.add.text(640, 405, data.text.openingReply, {
+        color: "#9fe5e1",
+        fontFamily: "Georgia, Times New Roman, serif",
+        fontSize: "30px",
+        align: "center"
+      }).setOrigin(0.5).setAlpha(0);
+      this.add.text(640, 665, data.text.openingSkipHint, {
+        color: "#aeb8d1",
+        fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px",
+        fontStyle: "bold",
+        letterSpacing: 2
+      }).setOrigin(0.5).setAlpha(0.72);
+
+      this.input.keyboard.once("keydown", () => this.finishOpening());
+      this.input.once("pointerdown", () => this.finishOpening());
+      this.time.delayedCall(180, () => {
+        this.signalText.setAlpha(1);
+        this.playSignalBeep();
+      });
+      this.time.delayedCall(720, () => this.playSignalBeep());
+      this.time.delayedCall(1100, () => this.tweens.add({
+        targets: this.questionText, alpha: 1, duration: 700, ease: "Sine.out"
+      }));
+      this.time.delayedCall(2700, () => this.tweens.add({
+        targets: this.replyText, alpha: 1, duration: 600, ease: "Sine.out"
+      }));
+      this.time.delayedCall(5200, () => this.finishOpening());
+    }
+
+    playSignalBeep() {
+      const context = this.sound.context;
+      if (!context || typeof context.createOscillator !== "function") return;
+      const oscillator = context.createOscillator();
+      const volume = context.createGain();
+      const now = context.currentTime;
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(880, now);
+      volume.gain.setValueAtTime(0.0001, now);
+      volume.gain.exponentialRampToValueAtTime(0.035, now + 0.02);
+      volume.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+      oscillator.connect(volume);
+      volume.connect(context.destination);
+      oscillator.start(now);
+      oscillator.stop(now + 0.17);
+    }
+
+    finishOpening() {
+      if (this.openingComplete) return;
+      this.openingComplete = true;
+      this.time.delayedCall(60, () => this.scene.start("MenuScene"));
     }
   }
 
@@ -743,6 +1040,8 @@
       this.selectedIndex = sceneData && Number.isInteger(sceneData.selectedIndex)
         ? sceneData.selectedIndex
         : 0;
+      this.moreInfoOpen = Boolean(sceneData && sceneData.moreInfoOpen);
+      this.infoPage = sceneData && sceneData.infoPage === 1 ? 1 : 0;
     }
 
     create() {
@@ -830,41 +1129,45 @@
       }
 
       const station = entries[this.selectedIndex];
-      this.entryLayer.add(this.add.text(640, 158, station.title, {
-        color: "#f0cd98", fontFamily: "Georgia, Times New Roman, serif",
-        fontSize: "26px", fontStyle: "bold", align: "center",
-        wordWrap: { width: 1040 }
-      }).setOrigin(0.5));
-      [
-        ["what", 105, 204, 490],
-        ["why", 105, 310, 490],
-        ["how", 105, 416, 490],
-        ["learned", 665, 204, 500],
-        ["today", 665, 342, 500]
-      ].forEach(([key, x, y, width]) => {
-        this.entryLayer.add(this.add.text(x, y, lunar.cardLabels[key], {
-          color: "#9fe5e1", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
-          fontSize: "18px", fontStyle: "bold", letterSpacing: 1
-        }));
-        this.entryLayer.add(this.add.text(x, y + 24, station.card[key], {
-          color: "#e5e9f2", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
-          fontSize: "18px", lineSpacing: 3, wordWrap: { width }
-        }));
-      });
-      this.entryLayer.add(this.add.text(105, 548, lunar.cardLabels.source, {
-        color: "#9fe5e1", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
-        fontSize: "18px", fontStyle: "bold"
-      }));
-      const sourceLink = this.add.text(105, 574, station.card.source, {
-        color: "#f3d9a6", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
-        fontSize: "18px", wordWrap: { width: 1020 }
-      }).setInteractive({ useHandCursor: true });
-      sourceLink.on("pointerdown", () => window.open(station.card.source, "_blank", "noopener"));
-      this.entryLayer.add(sourceLink);
+      if (this.moreInfoOpen) {
+        this.renderLongEntry(station);
+      } else {
+        addQuickMissionContent(this, this.entryLayer, station, {
+          narrow: isNarrowMissionView(this),
+          animate: false,
+          titleY: 165,
+          stateY: 552
+        });
+        addMissionActionButton(this, this.entryLayer, data.text.missionMoreInfo,
+          640, 608, 260, () => {
+            this.moreInfoOpen = true;
+            this.infoPage = 0;
+            this.renderEntry();
+          }, false);
+      }
       if (entries.length > 1) {
         this.addJournalNavigation(-1, data.text.journalPrevious, 130);
         this.addJournalNavigation(1, data.text.journalNext, 1150);
       }
+    }
+
+    renderLongEntry(station) {
+      addMissionLongInfo(this, this.entryLayer, station, this.infoPage, {
+        narrow: isNarrowMissionView(this),
+        titleY: 156
+      });
+      addMissionActionButton(this, this.entryLayer, data.text.missionBack,
+        410, 602, 300, () => {
+          this.moreInfoOpen = false;
+          this.renderEntry();
+        }, false);
+      const direction = this.infoPage === 0 ? 1 : -1;
+      const label = this.infoPage === 0 ? data.text.missionNext : data.text.missionPrevious;
+      addMissionActionButton(this, this.entryLayer, label,
+        850, 602, 240, () => {
+          this.infoPage = direction;
+          this.renderEntry();
+        }, false);
     }
 
     addJournalNavigation(direction, label, x) {
@@ -886,7 +1189,11 @@
 
     toggleLanguage() {
       applyLanguage(data.language === "en" ? "es" : "en");
-      this.scene.restart({ selectedIndex: this.selectedIndex });
+      this.scene.restart({
+        selectedIndex: this.selectedIndex,
+        moreInfoOpen: this.moreInfoOpen,
+        infoPage: this.infoPage
+      });
     }
   }
 
@@ -1586,7 +1893,7 @@
 
     handleStationInteraction(time) {
       if (this.missionCardOpen) {
-        this.closeMissionCard();
+        this.advanceMissionCard();
         return;
       }
       if (this.dialogueOpen) {
@@ -2023,8 +2330,11 @@
     }
 
     showMissionCard(station) {
+      if (this.missionCardLayer) this.missionCardLayer.destroy(true);
       this.missionCardStationId = station.id;
       this.missionCardOpen = true;
+      this.missionCardMode = "quick";
+      this.missionCardInfoPage = 0;
       this.nearStation = null;
       this.player.body.setVelocity(0, 0);
       this.player.body.setAccelerationX(0);
@@ -2035,63 +2345,109 @@
 
       const layer = this.add.container(0, 0).setScrollFactor(0).setDepth(30);
       this.missionCardLayer = layer;
-      layer.add(this.add.rectangle(640, 360, 1280, 720, 0x080d1d, 0.82));
-      layer.add(this.add.rectangle(640, 360, 1120, 620, 0x15213a, 0.98)
+      const backdrop = this.add.rectangle(640, 360, 1280, 720, 0x080d1d, 0.84)
+        .setInteractive();
+      backdrop.on("pointerdown", () => this.revealAllMissionFacts());
+      layer.add(backdrop);
+      layer.add(this.add.rectangle(640, 360, 1120, 670, 0x15213a, 0.98)
         .setStrokeStyle(3, 0xe7c89b, 0.95));
-      layer.add(this.add.rectangle(640, 360, 1098, 598, 0x101a30, 0.98)
+      layer.add(this.add.rectangle(640, 360, 1098, 648, 0x101a30, 0.98)
         .setStrokeStyle(1, 0x7890a6, 0.72));
-      layer.add(this.add.text(640, 88, lunar.cardTitle, {
+      layer.add(this.add.text(640, 72, data.text.missionSnapshotTitle, {
         color: "#f0cd98", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "20px", fontStyle: "bold", letterSpacing: 3
       }).setOrigin(0.5));
-      layer.add(this.add.text(640, 124, station.title, {
-        color: "#fff8ec", fontFamily: "Georgia, Times New Roman, serif",
-        fontSize: "30px", fontStyle: "bold", align: "center",
-        wordWrap: { width: 1000 }
-      }).setOrigin(0.5));
-
-      const fields = [
-        ["what", 105, 174, 490],
-        ["why", 105, 288, 490],
-        ["how", 105, 402, 490],
-        ["learned", 665, 174, 500],
-        ["today", 665, 314, 500]
-      ];
-      fields.forEach(([key, x, y, width]) => {
-        layer.add(this.add.text(x, y, lunar.cardLabels[key], {
-          color: "#9fe5e1", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
-          fontSize: "18px", fontStyle: "bold", letterSpacing: 1
-        }));
-        layer.add(this.add.text(x, y + 26, station.card[key], {
-          color: "#e5e9f2", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
-          fontSize: "18px", lineSpacing: 4, wordWrap: { width }
-        }));
+      const content = addQuickMissionContent(this, layer, station, {
+        narrow: isNarrowMissionView(this),
+        animate: true,
+        titleY: 112
       });
-      layer.add(this.add.text(105, 535, lunar.cardLabels.source, {
-        color: "#9fe5e1", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
-        fontSize: "18px", fontStyle: "bold", letterSpacing: 1
-      }));
-      const sourceLink = this.add.text(105, 562, station.card.source, {
-        color: "#f3d9a6", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
-        fontSize: "18px", wordWrap: { width: 1020 }
-      }).setInteractive({ useHandCursor: true });
-      sourceLink.on("pointerdown", () => window.open(station.card.source, "_blank", "noopener"));
-      layer.add(sourceLink);
-      const cardCloseText = this.add.text(640, 625, lunar.cardClose, {
-        color: "#fff1ce", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+      this.missionCardRows = content.rows;
+      this.missionCardState = content.state;
+      this.missionCardRevealIndex = 0;
+      layer.add(this.add.text(640, 605, data.text.missionRevealHint, {
+        color: "#b9d8e4", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "18px", fontStyle: "bold", align: "center"
-      }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-      cardCloseText.on("pointerdown", () => this.closeMissionCard());
-      layer.add(cardCloseText);
+      }).setOrigin(0.5));
+      addMissionActionButton(this, layer, data.text.missionContinue,
+        540, 655, 230, () => this.closeMissionCard(), true);
+      addMissionActionButton(this, layer, data.text.missionMoreInfo,
+        805, 655, 230, () => this.showMissionMoreInfo(station, 0), false);
+      this.missionCardRevealEvent = this.time.addEvent({
+        delay: 650,
+        repeat: this.missionCardRows.length - 1,
+        callback: () => this.revealNextMissionFact()
+      });
+    }
+
+    showMissionMoreInfo(station, page) {
+      if (this.missionCardRevealEvent) this.missionCardRevealEvent.remove(false);
+      this.missionCardMode = "info";
+      this.missionCardInfoPage = page;
+      if (this.missionCardLayer) this.missionCardLayer.destroy(true);
+      const layer = this.add.container(0, 0).setScrollFactor(0).setDepth(31);
+      this.missionCardLayer = layer;
+      layer.add(this.add.rectangle(640, 360, 1280, 720, 0x080d1d, 0.86));
+      layer.add(this.add.rectangle(640, 360, 1120, 670, 0x15213a, 0.98)
+        .setStrokeStyle(3, 0xe7c89b, 0.95));
+      layer.add(this.add.rectangle(640, 360, 1098, 648, 0x101a30, 0.98)
+        .setStrokeStyle(1, 0x7890a6, 0.72));
+      addMissionLongInfo(this, layer, station, page, {
+        narrow: isNarrowMissionView(this),
+        titleY: 104
+      });
+      addMissionActionButton(this, layer, data.text.missionBack,
+        410, 650, 310, () => this.showMissionCard(station), false);
+      if (page === 0) {
+        addMissionActionButton(this, layer, data.text.missionNext,
+          850, 650, 240, () => this.showMissionMoreInfo(station, 1), true);
+      } else {
+        addMissionActionButton(this, layer, data.text.missionContinue,
+          850, 650, 240, () => this.closeMissionCard(), true);
+      }
+    }
+
+    revealNextMissionFact() {
+      if (!this.missionCardRows || this.missionCardRevealIndex >= this.missionCardRows.length) return;
+      const row = this.missionCardRows[this.missionCardRevealIndex];
+      row.setVisible(true).setAlpha(0);
+      this.tweens.add({ targets: row, alpha: 1, duration: 250, ease: "Quad.out" });
+      this.missionCardRevealIndex += 1;
+      if (this.missionCardRevealIndex >= this.missionCardRows.length) {
+        this.missionCardState.setVisible(true).setAlpha(0);
+        this.tweens.add({ targets: this.missionCardState, alpha: 1, duration: 300, ease: "Quad.out" });
+      }
+    }
+
+    revealAllMissionFacts() {
+      if (this.missionCardMode !== "quick" || !this.missionCardRows) return;
+      if (this.missionCardRevealEvent) this.missionCardRevealEvent.remove(false);
+      while (this.missionCardRevealIndex < this.missionCardRows.length) {
+        this.revealNextMissionFact();
+      }
+    }
+
+    advanceMissionCard() {
+      if (this.missionCardMode === "info") {
+        this.closeMissionCard();
+      } else if (this.missionCardRevealIndex < this.missionCardRows.length) {
+        this.revealAllMissionFacts();
+      } else {
+        this.closeMissionCard();
+      }
     }
 
     closeMissionCard() {
       const opensVoyagerFinale = this.worldId === "deep"
         && this.missionCardStationId === "voyager";
+      if (this.missionCardRevealEvent) this.missionCardRevealEvent.remove(false);
       this.missionCardOpen = false;
       this.missionCardLayer.destroy(true);
       this.missionCardLayer = null;
       this.missionCardStationId = null;
+      this.missionCardMode = null;
+      this.missionCardRows = null;
+      this.missionCardState = null;
       this.player.body.setAllowGravity(true);
       this.statusText.setText(
         this.stations.every((station) => station.completed)
@@ -2111,20 +2467,30 @@
       layer.add(this.add.rectangle(640, 360, 1280, 720, 0x050914, 0.88));
       layer.add(this.add.rectangle(640, 360, 1020, 500, 0x111b34, 0.98)
         .setStrokeStyle(3, 0xb9d8e4, 0.95));
-      layer.add(this.add.circle(640, 212, 48, 0x8ee4f2, 0.2)
+      layer.add(this.add.image(485, 198, art.voyager)
+        .setDisplaySize(205, 155).setAngle(-8));
+      layer.add(this.add.image(790, 198, art.voyager)
+        .setDisplaySize(205, 155).setAngle(8));
+      layer.add(this.add.circle(1025, 151, 9, 0x8ee4f2, 0.95)
         .setStrokeStyle(2, 0xb7f3ff, 0.8));
-      layer.add(this.add.circle(640, 212, 15, 0x8ee4f2, 0.95));
       layer.add(this.add.text(640, 292, lunar.finaleTitle, {
         color: "#f0cd98", fontFamily: "Georgia, Times New Roman, serif",
         fontSize: "30px", fontStyle: "bold", align: "center",
         wordWrap: { width: 900 }
       }).setOrigin(0.5));
-      layer.add(this.add.text(640, 398, lunar.finaleMessage, {
+      const message = this.add.text(640, 354, data.text.hiddenMessageFull, {
+        color: "#9fe5e1", fontFamily: "Georgia, Times New Roman, serif",
+        fontSize: "24px", fontStyle: "bold", align: "center",
+        wordWrap: { width: 900 }
+      }).setOrigin(0.5).setAlpha(0);
+      layer.add(message);
+      this.tweens.add({ targets: message, alpha: 1, duration: 900, delay: 350 });
+      layer.add(this.add.text(640, 445, lunar.finaleMessage, {
         color: "#fff8ec", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
-        fontSize: "22px", lineSpacing: 12, align: "center",
+        fontSize: "20px", lineSpacing: 8, align: "center",
         wordWrap: { width: 850 }
       }).setOrigin(0.5));
-      const finaleCloseText = this.add.text(640, 568, lunar.finaleClose, {
+      const finaleCloseText = this.add.text(640, 570, lunar.finaleClose, {
         color: "#b9d8e4", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "18px", fontStyle: "bold", align: "center"
       }).setOrigin(0.5).setInteractive({ useHandCursor: true });
@@ -2240,6 +2606,10 @@
         .setStrokeStyle(2, worldAccent, 0.5)
         .setScrollFactor(0)
         .setDepth(8);
+      this.add.rectangle(640, 207, 1240, 66, 0x09152e, 0.3)
+        .setStrokeStyle(2, worldAccent, 0.42)
+        .setScrollFactor(0)
+        .setDepth(8);
       this.expeditionLabelText = this.add.text(28, 20,
         this.worldId === "mars" ? data.text.marsExpeditionLabel
           : this.worldId === "deep" ? data.text.deepSpaceExpeditionLabel
@@ -2273,6 +2643,13 @@
         .setOrigin(0, 0.5)
         .setScrollFactor(0)
         .setDepth(11);
+      this.echoProgressText = this.add.text(28, 178, "", {
+        ...fixedText, fontSize: "18px", color: "#f6dfaa"
+      }).setScrollFactor(0).setDepth(10);
+      this.hiddenMessageText = this.add.text(28, 202, "", {
+        ...fixedText, fontSize: "18px", color: "#e5e9f2",
+        wordWrap: { width: 1215 }
+      }).setScrollFactor(0).setDepth(10);
       this.helpText = this.add.text(640, 680, data.text.touchControlsHint, {
         ...fixedText, align: "center", fontSize: "18px", color: "#f1f0eb",
         wordWrap: { width: 1160 }
@@ -2478,6 +2855,9 @@
     refreshLanguage() {
       const nearbyId = this.nearStation && this.nearStation.id;
       const cardId = this.missionCardStationId;
+      const cardMode = this.missionCardMode;
+      const cardInfoPage = this.missionCardInfoPage;
+      const cardRevealIndex = this.missionCardRevealIndex || 0;
       this.stations.forEach((station) => {
         const localized = lunar.stations.find((entry) => entry.id === station.id);
         station.title = localized.title;
@@ -2553,8 +2933,18 @@
       }
 
       if (this.missionCardOpen) {
-        this.missionCardLayer.destroy(true);
-        this.showMissionCard(this.getStation(cardId));
+        const station = this.getStation(cardId);
+        if (cardMode === "info") {
+          this.showMissionMoreInfo(station, cardInfoPage);
+        } else {
+          this.showMissionCard(station);
+          if (cardRevealIndex > 0) {
+            if (this.missionCardRevealEvent) this.missionCardRevealEvent.remove(false);
+            while (this.missionCardRevealIndex < cardRevealIndex) {
+              this.revealNextMissionFact();
+            }
+          }
+        }
       }
       if (this.voyagerFinaleOpen) {
         this.voyagerFinaleLayer.destroy(true);
@@ -2739,6 +3129,15 @@
       this.statsText.setText(
         `${data.text.parkourStars}: ${this.echoStars}     ${data.text.parkourBatteries}: ${"●".repeat(this.batteries)}${"○".repeat(3 - this.batteries)}     ${lunar.progressLabel}: ${missions}/${this.stations.length}`
       );
+      this.echoProgressText.setText(data.text.echoesRecovered
+        .replace("{count}", String(journalIds.length))
+        .replace("{total}", String(stationIds.length)));
+      const recovered = new Set(journalIds);
+      this.hiddenMessageText.setText(`${data.text.hiddenMessageLabel}: ${stationIds
+        .map((id) => recovered.has(id)
+          ? data.text.hiddenMessageWords[id]
+          : data.text.hiddenMessageHiddenWord)
+        .join(" ")}`);
       this.updateRouteProgress();
     }
 
@@ -2843,7 +3242,7 @@
       }
       if (!this.player) return;
       this.updateRouteProgress();
-      if (this.completed) {
+      if (this.completed && !this.missionCardOpen && !this.voyagerFinaleOpen) {
         if (Phaser.Input.Keyboard.JustDown(this.keys.escape)) this.scene.start("MenuScene");
         return;
       }
@@ -2866,6 +3265,10 @@
       const languagePressed = Phaser.Input.Keyboard.JustDown(this.keys.language);
 
       if (escapePressed) {
+        if (this.missionCardOpen) {
+          this.closeMissionCard();
+          return;
+        }
         this.scene.start("MenuScene");
         return;
       }
@@ -2889,7 +3292,7 @@
       }
 
       if (this.missionCardOpen) {
-        if (interactPressed) this.closeMissionCard();
+        if (interactPressed) this.advanceMissionCard();
         return;
       }
 
@@ -3038,6 +3441,7 @@
   const sceneTypes = {
     BootScene,
     LoadingScene,
+    OpeningScene,
     MenuScene,
     SystemMapScene,
     CreditsScene,
