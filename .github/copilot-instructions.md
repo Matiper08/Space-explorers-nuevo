@@ -1,0 +1,76 @@
+# SPACE EXPLORERS — INSTRUCCIONES DEL PROYECTO
+Leé este archivo completo antes de cada tarea. No hay espacio para la ambigüedad: si algo no está definido acá, elegí lo más simple y avisame en una línea. Respondé en español, en 5 líneas máximo por tarea.
+
+## 1. QUÉ ES Y PARA QUÉ
+Videojuego web 2D de plataformas, 100% HTML + CSS + JavaScript, para el NASA Space Apps Challenge 2026, desafío "NASA's Discarded Equipment Storytelling" (https://www.spaceappschallenge.org/2026/challenges/nasas-discarded-equipment-storytelling/). Objetivo del desafío: contar a chicos de primaria (6 a 12 años) la historia del equipo que la NASA dejó en la Luna, en Marte y en el espacio profundo: qué era, por qué se mandó, cómo funcionaba, qué descubrió y cómo está hoy, conectando la ingeniería con la ciencia, mostrando cómo operaban las misiones (no listando datos), con conexión emocional con estos "exploradores robóticos olvidados" y con PRECISIÓN. Se evalúa: Impacto, Creatividad, Validez, Relevancia y Presentación. El tiempo es muy limitado (el hackatón es el 14 y 15 de noviembre de 2026).
+
+## 2. REFERENCIA: LITTLEBIGPLANET (SOLO COMO MODELO, NO REPLICAR NADA)
+Tomar de LittleBigPlanet únicamente el espíritu: mundos temáticos únicos y llamativos que invitan a admirar, narrador cálido, interacción juguetona con el entorno, personajes expresivos y una fuerte conexión emocional. Prohibido copiar personajes, diseños, música, nombres o assets de ese juego.
+
+## 3. HISTORIA
+Maia, exploradora espacial de 10 años, viaja con Tuerca, un robot armado con piezas sueltas. Su abuela Elena (voz de radio y narradora cálida) le regaló el Ecoscopio, una radio que capta el "eco" de objetos olvidados. Maia los encuentra, escucha su historia, les cumple un deseo pequeño y les agradece. Idea central: "olvidado" no es lo mismo que "dejado atrás" (algunos siguen funcionando). Enemigos: los Grises (bolitas de polvo gris, tristes): no se las lastima; al saltarles encima se iluminan y se vuelven chispas de colores. Tono tierno, sin violencia. Final emotivo con las Voyager: Maia les envía un mensaje de gracias.
+
+## 4. LOS OBJETOS DEL JUEGO (SOLO ESTOS, SON LOS RECURSOS OFICIALES DEL DESAFÍO)
+Usar únicamente estos equipos y sus fuentes. Los datos de cada ficha salen SOLO de estas páginas; lo que no esté ahí, marcalo con // VERIFY y no inventes.
+LUNA (4 encuentros):
+- Apollo Lunar Modules (etapas de descenso, como el Eagle del Apollo 11, quedaron como plataformas de despegue): https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-059C
+- Lunar Roving Vehicles (3 "buggies lunares" eléctricos, estacionados para siempre): https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C
+- ALSEP (paquetes científicos Apollo: sismómetros, retrorreflectores, etc.): https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-099C
+- Surveyor (sondas robóticas de los años 60 que probaron el aterrizaje suave; usar Surveyor 3): https://science.nasa.gov/mission/surveyor-3/
+MARTE (5 encuentros):
+- Mars Pathfinder: https://science.nasa.gov/mission/mars-pathfinder/
+- Spirit y Opportunity: https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/
+- Viking 1: https://science.nasa.gov/mission/viking-1/
+- InSight: https://science.nasa.gov/mission/insight/
+- Ingenuity: https://science.nasa.gov/mission/mars-2020-perseverance/ingenuity-mars-helicopter/
+ESPACIO PROFUNDO Y OTROS CUERPOS (5 encuentros). OJO: Dawn, NEAR Shoemaker, Pioneer 10 y Kepler vienen en el listado de recursos pero NO son misiones a Marte; van en este mundo:
+- Dawn: https://science.nasa.gov/mission/dawn/
+- NEAR Shoemaker: https://science.nasa.gov/mission/near-shoemaker/
+- Pioneer 10: https://science.nasa.gov/mission/pioneer-10/
+- Kepler: https://science.nasa.gov/mission/kepler/
+- Voyager 1 y 2 (final del juego): https://science.nasa.gov/mission/voyager/
+
+## 4b. COMPROMISOS DE DISEÑO PARA QUE SEA POSIBLE
+3 mundos grandes, cada uno UN escenario continuo y único, y los objetos aparecen como "estaciones" de encuentro a lo largo del recorrido (no un nivel por objeto). Cada encuentro tiene un reto corto propio que muestre CÓMO operaba el equipo:
+- Lunar Module: escalar sus patas y escaleras y leer su placa. LRV: tramo conduciendo el buggy con baja gravedad. ALSEP: sismógrafo de ritmo/ondas. Surveyor: prueba de aterrizaje suave y noche lunar (luz/sombra).
+- Pathfinder: aterrizaje con airbags (rebotes en trampolines). Spirit/Opportunity: panel solar, polvo y tormenta que oscurece. Viking 1: brazo recolector de muestras de suelo. InSight: escuchar un sismo marciano. Ingenuity: planeo con hélice (primer vuelo en otro planeta).
+- Dawn: propulsión iónica (aceleración lenta y continua). NEAR Shoemaker: descenso a un asteroide. Pioneer 10: placa y cruce del cinturón de asteroides. Kepler: contar tránsitos de luz de una estrella. Voyager: honda gravitacional con planetas-trampolín y final emotivo.
+
+## 5. ARTE (EL PUNTO MÁS IMPORTANTE)
+El juego actual anterior fue rechazado por básico. Exigencias concretas:
+- Aspecto 2.5D: lo más parecido a 3D sin serlo. Cada personaje y máquina con volumen: degradés, luz de borde (rim light), sombras propias, sombra proyectada en el piso, brillos, oclusión ambiental y contorno suave.
+- Todo dibujado por código al iniciar (sin imágenes de IA), con Canvas 2D (createLinearGradient, createRadialGradient, shadowBlur) registrado como textura de Phaser (this.textures.createCanvas). Cada imagen definida por clave en arte.js, con archivo opcional en assets/ para reemplazarla después.
+- Resolución interna 1280x720, Phaser.Scale.FIT, centrada, llenando la ventana sin franjas.
+- Máquinas con PERSONALIDAD: siluetas fieles a las reales (sin logos ni insignias de la NASA), pero con "ojos" hechos con cámaras o sensores, posturas expresivas y animaciones propias (parpadeo, respiración, cabeceo). Maia y Tuerca: animaciones de quieta, caminar, saltar, caer y celebrar, con squash and stretch.
+- Cada mundo es ÚNICO y deslumbrante, nada genérico:
+  * Luna: valle plateado y silencioso, la Tierra enorme en el cielo, sombras largas azules, regolito que brilla, bordes de cráteres, huellas y marcas de ruedas.
+  * Marte: cielo color caramelo, dunas óxido, paredes de cañón y silueta de un volcán gigante; cada zona con su paleta y su clima (tormenta de polvo).
+  * Espacio profundo: nebulosas, cinturón de asteroides, planetas gigantes con anillos, campo de estrellas, aurora de cintas luminosas, y la Tierra como "punto azul pálido" al final.
+- Mínimo 5 capas de parallax por mundo, viñeta, partículas ambientales (polvo, destellos), brillo pulsante en el objeto olvidado. Cada objeto con muchos detalles (tornillos, paneles, cables, desgaste).
+
+## 6. PARKOUR / JUGABILIDAD (NADA DE "JUEGO FLASH")
+Movimiento con aceleración y frenado, salto variable, doble salto (mochila), coyote time, jump buffer, control aéreo, gravedad menor en el ápice, salto en pared (wall slide y wall jump), aterrizaje con rebote visual. Elementos: plataformas móviles y que se caen, trampolines, zonas de baja gravedad (Luna), viento (Marte), corrientes (espacio). Parámetros editables en CONFIG. Cámara que se adelanta. Todo debe sentirse preciso, generoso y "jugoso" (partículas, temblor suave de cámara, sonido listo para enchufar). Sin game over: Tuerca rescata a Maia. HUD: estrellas de eco, 3 baterías.
+
+## 7. DIDÁCTICA Y NARRATIVA
+Cada encuentro termina con una FICHA DE MISIÓN (qué era, por qué se mandó, cómo funcionaba, qué descubrió, cómo está hoy, fuente con el enlace oficial de la sección 4) y se guarda en el "Diario del Ecoscopio" (álbum abrible desde el menú). Diálogos con caja que escribe letra por letra, cálidos, cortos (2 o 3 renglones). Cada objeto habla en primera persona con carácter propio.
+
+## 8. IDIOMA Y ACCESIBILIDAD
+Inglés por defecto (el jurado lee inglés) y español; botón y tecla L. TODO el texto sale de datos.js. Texto de al menos 18 px, subtítulos, nada que dependa solo del color, jugable con teclado y con controles táctiles en pantalla. Opción de reducir efectos.
+
+## 9. ESTRUCTURA Y TECNOLOGÍA
+index.html, style.css, datos.js (config, textos EN/ES, diálogos, fichas, niveles), arte.js (dibujo procedural y claves de imagen) y game.js (lógica), carpeta assets/. Única librería: Phaser 3 por CDN con versión fija (phaser@3.80.1). Sin Node, npm ni compilación. Comentarios en español.
+
+## 10. REGLAS DEL HACKATÓN
+Interfaz y entregables en inglés. Sin logos, banderas ni insignias de la NASA. Sin imágenes ni audio de IA. Sin menores identificables. Usar datos de la NASA y declararlos. Declarar que se usaron Claude y GitHub Copilot para código y textos.
+
+## 11. HITOS (se piden de a uno; dejar siempre el juego FUNCIONANDO)
+H1 Estructura y base técnica (pantalla 1280x720, escenas, carga).
+H2 Parkour completo con un escenario de prueba.
+H3 Motor de arte 2.5D, y Maia, Tuerca y los Grises con animaciones.
+H4 Mundo Luna completo (5 capas, 4 encuentros con retos y fichas).
+H5 Narrativa, diálogos, Diario, idioma EN/ES.
+H6 Mundo Marte (5 encuentros).
+H7 Mundo espacio profundo (5 encuentros y final Voyager).
+H8 Menú, mapa del sistema solar, pausa, HUD y controles táctiles.
+H9 Entregables: README.md, CREDITS.md, AI_DISCLOSURE.md, SUBMISSION.md y DEMO_SCRIPT.md en inglés, y publicación en GitHub Pages.
+Si falta tiempo, la prioridad es H1 a H5 y un tramo de H7 con las Voyager.
