@@ -2,14 +2,25 @@
 (function startSpaceExplorers() {
   const data = window.SpaceData;
   const art = window.SpaceArt.keys;
+  const worldData = (worldId) => {
+    if (worldId === "mars") return data.marsWorld;
+    if (worldId === "deep") return data.deepSpaceWorld;
+    return data.lunarWorld;
+  };
   let lunar = data.lunarWorld;
   const errorPanel = document.getElementById("startup-error");
   const journalStorageKey = "space-explorers-ecoscope-journal";
   const languageStorageKey = "space-explorers-language";
-  const stationIds = data.lunarWorld.stations.map((station) => station.id);
+  const allStations = () => [
+    ...data.lunarWorld.stations,
+    ...data.marsWorld.stations,
+    ...data.deepSpaceWorld.stations
+  ];
+  const stationIds = allStations().map((station) => station.id);
   let journalIds = [];
   let languageStorageFailed = false;
-  let introShown = false;
+  const introShownWorlds = new Set();
+  let selectedWorldId = "moon";
 
   try {
     if (window.localStorage.getItem(languageStorageKey) === "es") data.setLanguage("es");
@@ -51,7 +62,7 @@
 
   function applyLanguage(language) {
     data.setLanguage(language);
-    lunar = data.lunarWorld;
+    lunar = worldData(selectedWorldId);
     document.documentElement.lang = language;
     document.title = data.text.pageTitle;
     document.getElementById("page-description").content = data.text.pageDescription;
@@ -138,7 +149,9 @@
     }
 
     create() {
-      this.add.image(0, 0, art.menuBackground).setOrigin(0);
+      const menuBackground = selectedWorldId === "mars" ? art.marsMenuBackground
+        : selectedWorldId === "deep" ? art.deepMenuBackground : art.menuBackground;
+      this.add.image(0, 0, menuBackground).setOrigin(0);
       this.add.rectangle(640, 360, 1280, 720, 0x091020, 0.34);
       this.add.image(640, 162, art.signal).setDisplaySize(64, 64);
 
@@ -177,10 +190,10 @@
       }).setOrigin(0.5);
       languageButton.on("pointerdown", () => this.toggleLanguage());
 
-      const button = this.add.rectangle(640, 440, 350, 64, 0xf0cd98, 1)
+      const button = this.add.rectangle(640, 428, 350, 60, 0xf0cd98, 1)
         .setStrokeStyle(2, 0xffedcc, 0.9)
         .setInteractive({ useHandCursor: true });
-      const buttonLabel = this.add.text(640, 440, data.text.start, {
+      const buttonLabel = this.add.text(640, 428, data.text.start, {
         color: "#22253a",
         fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "22px",
@@ -193,16 +206,30 @@
       button.on("pointerdown", () => this.beginExpedition());
       buttonLabel.setInteractive({ useHandCursor: true }).on("pointerdown", () => this.beginExpedition());
 
-      this.add.text(640, 485, data.text.startHint, {
+      this.add.text(640, 469, data.text.startHint, {
         color: "#e4e6ed",
         fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "18px"
       }).setOrigin(0.5);
 
-      const journalButton = this.add.rectangle(640, 568, 500, 60, 0x243450, 0.98)
+      const worldButton = this.add.rectangle(640, 520, 430, 46, 0x6a3b3d, 0.98)
+        .setStrokeStyle(2, 0xf2bd84, 0.92)
+        .setInteractive({ useHandCursor: true });
+      this.worldButtonLabel = this.add.text(640, 520, "", {
+        color: "#fff1d2",
+        fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px",
+        fontStyle: "bold",
+        align: "center"
+      }).setOrigin(0.5);
+      worldButton.on("pointerdown", () => this.toggleWorld());
+      this.worldButtonLabel.setInteractive({ useHandCursor: true }).on("pointerdown", () => this.toggleWorld());
+      this.updateWorldButton();
+
+      const journalButton = this.add.rectangle(640, 580, 500, 56, 0x243450, 0.98)
         .setStrokeStyle(2, 0xb9d8e4, 0.9)
         .setInteractive({ useHandCursor: true });
-      const journalLabel = this.add.text(640, 568, data.text.journalButton, {
+      const journalLabel = this.add.text(640, 580, data.text.journalButton, {
         color: "#f6f1e7",
         fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "18px",
@@ -237,7 +264,7 @@
     }
 
     beginExpedition() {
-      this.scene.start("ExpeditionScene");
+      this.scene.start("ExpeditionScene", { worldId: selectedWorldId });
     }
 
     openJournal() {
@@ -246,6 +273,18 @@
 
     toggleLanguage() {
       applyLanguage(data.language === "en" ? "es" : "en");
+      this.scene.restart();
+    }
+
+    updateWorldButton() {
+      const worldLabel = selectedWorldId === "mars" ? data.text.worldMars
+        : selectedWorldId === "deep" ? data.text.worldDeep : data.text.worldMoon;
+      this.worldButtonLabel.setText(data.text.worldButton.replace("{world}", worldLabel));
+    }
+
+    toggleWorld() {
+      selectedWorldId = selectedWorldId === "moon" ? "mars"
+        : selectedWorldId === "mars" ? "deep" : "moon";
       this.scene.restart();
     }
   }
@@ -262,7 +301,9 @@
     }
 
     create() {
-      this.add.image(0, 0, art.menuBackground).setOrigin(0);
+      const journalBackground = selectedWorldId === "mars" ? art.marsMenuBackground
+        : selectedWorldId === "deep" ? art.deepMenuBackground : art.menuBackground;
+      this.add.image(0, 0, journalBackground).setOrigin(0);
       this.add.rectangle(640, 360, 1280, 720, 0x091020, 0.72);
       this.add.rectangle(640, 360, 1160, 620, 0x111a30, 0.97)
         .setStrokeStyle(3, 0xe7c89b, 0.95);
@@ -322,7 +363,7 @@
 
     getEntries() {
       return journalIds
-        .map((id) => lunar.stations.find((station) => station.id === id))
+        .map((id) => allStations().find((station) => station.id === id))
         .filter(Boolean);
     }
 
@@ -334,7 +375,7 @@
         ? data.text.languageStorageError
         : data.text.journalCount
           .replace("{count}", String(entries.length))
-          .replace("{total}", String(lunar.stations.length)));
+          .replace("{total}", String(allStations().length)));
       if (!entries.length) {
         this.entryLayer.add(this.add.text(640, 350, data.text.journalEmpty, {
           color: "#e5e9f2", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
@@ -409,27 +450,75 @@
       super("ExpeditionScene");
     }
 
+    init(sceneData) {
+      if (sceneData && sceneData.worldId) {
+        selectedWorldId = ["moon", "mars", "deep"].includes(sceneData.worldId)
+          ? sceneData.worldId : "moon";
+      }
+      lunar = worldData(selectedWorldId);
+      this.worldId = selectedWorldId;
+    }
+
     create() {
       this.parkour = data.config.parkour;
       this.physics.world.gravity.y = this.parkour.gravity;
       this.physics.world.setBounds(0, 0, this.parkour.worldWidth, this.parkour.rescueY);
       this.cameras.main.setBounds(0, 0, this.parkour.worldWidth, 720);
-      [
-        [art.sky, 0.08, -30],
-        [art.farRidge, 0.18, -28],
-        [art.middleRidge, 0.32, -26],
-        [art.nearRidge, 0.48, -24],
-        [art.regolith, 0.64, -22]
-      ].forEach(([key, scroll, depth]) => {
+      const parallaxLayers = this.worldId === "mars"
+        ? [
+          [art.marsSky, 0.08, -30],
+          [art.marsFarRidge, 0.18, -28],
+          [art.marsMiddleRidge, 0.32, -26],
+          [art.marsNearRidge, 0.48, -24],
+          [art.marsRegolith, 0.64, -22]
+        ]
+        : this.worldId === "deep"
+          ? [
+            [art.deepSky, 0.06, -30],
+            [art.deepFarRidge, 0.16, -28],
+            [art.deepMiddleRidge, 0.29, -26],
+            [art.deepNearRidge, 0.44, -24],
+            [art.deepDust, 0.62, -22]
+          ]
+          : [
+          [art.sky, 0.08, -30],
+          [art.farRidge, 0.18, -28],
+          [art.middleRidge, 0.32, -26],
+          [art.nearRidge, 0.48, -24],
+          [art.regolith, 0.64, -22]
+        ];
+      parallaxLayers.forEach(([key, scroll, depth]) => {
         this.add.tileSprite(0, 0, this.parkour.worldWidth, 720, key)
           .setOrigin(0)
           .setScrollFactor(scroll)
           .setDepth(depth);
       });
-      this.add.image(640, 360, art.vignette).setScrollFactor(0).setDepth(6);
+      if (this.worldId === "mars") {
+        this.add.image(650, 182, art.marsMons).setOrigin(0).setScrollFactor(0.14).setDepth(-29.5);
+        this.add.image(2070, 238, art.marsCanyonWall).setOrigin(0).setScrollFactor(0.31).setDepth(-23.6);
+      } else if (this.worldId === "deep") {
+        this.add.tileSprite(0, 0, this.parkour.worldWidth, 720, art.deepAurora)
+          .setOrigin(0).setScrollFactor(0.38).setDepth(-21).setAlpha(0.58);
+        this.add.image(1220, 210, art.deepGasGiant)
+          .setDisplaySize(430, 330).setScrollFactor(0.18).setDepth(-20);
+        this.add.image(1710, 150, art.deepRingedPlanet)
+          .setDisplaySize(510, 350).setScrollFactor(0.3).setDepth(-19.8);
+        this.add.image(4650, 185, art.deepEarthDot)
+          .setDisplaySize(56, 56).setScrollFactor(0.98).setDepth(-19.5);
+      }
+      const vignette = this.worldId === "mars" ? art.marsVignette
+        : this.worldId === "deep" ? art.deepVignette : art.vignette;
+      this.add.image(640, 360, vignette)
+        .setScrollFactor(0).setDepth(6);
+      this.platformTexture = this.worldId === "mars" ? art.marsPlatform
+        : this.worldId === "deep" ? art.deepPlatform : art.platform;
+      this.springTexture = this.worldId === "mars" ? art.marsAirbag
+        : this.worldId === "deep" ? art.deepSpring : art.spring;
       this.createPlayer();
       this.createCourse();
-      this.createLunarEncounters();
+      if (this.worldId === "mars") this.createMarsEncounters();
+      else if (this.worldId === "deep") this.createDeepSpaceEncounters();
+      else this.createLunarEncounters();
       this.createCompanions();
       this.createHud();
       this.createParticles();
@@ -455,6 +544,7 @@
       this.wasGrounded = false;
       this.inLowGravity = false;
       this.inWind = false;
+      this.inCurrent = false;
       this.echoStars = 0;
       this.batteries = 3;
       this.checkpointX = 90;
@@ -475,11 +565,12 @@
       this.surveyorMaxFallSpeed = 0;
       this.surveyorFadeStarted = 0;
       this.inLrvLowGravity = false;
+      this.voyagerFinaleOpen = false;
       this.updateStats();
       this.input.keyboard.on("keydown-ESC", () => this.scene.start("MenuScene"));
       this.input.keyboard.on("keydown-R", () => this.scene.restart());
-      if (!introShown) {
-        introShown = true;
+      if (!introShownWorlds.has(this.worldId)) {
+        introShownWorlds.add(this.worldId);
         this.startDialogue("intro");
       }
     }
@@ -497,9 +588,10 @@
         [0, 1050], [1190, 2130], [2260, 3370], [3490, worldWidth - 3490]
       ];
       groundSections.forEach(([x, width]) => {
-        const ledge = this.ground.create(x + width / 2, this.parkour.groundY + 28, art.platform);
+        const ledge = this.ground.create(x + width / 2, this.parkour.groundY + 28, this.platformTexture);
         ledge.setDisplaySize(width, 92).refreshBody();
-        this.add.ellipse(x + width / 2, this.parkour.groundY + 16, width * 0.92, 24, 0x11182a, 0.38);
+        this.add.ellipse(x + width / 2, this.parkour.groundY + 16, width * 0.92, 24,
+          this.worldId === "mars" ? 0x4b2a34 : 0x11182a, 0.38);
       });
 
       [
@@ -527,10 +619,20 @@
       this.addEcho(3570, 375);
       this.addEcho(4300, 360);
 
-      this.lowGravityZones = [
-        this.addZone(1750, 360, 700, 500, 0x81d9e3, 0.12),
-        this.addZone(2580, 330, 620, 550, 0x81d9e3, 0.1)
-      ];
+      this.lowGravityZones = this.worldId === "moon"
+        ? [
+          this.addZone(1750, 360, 700, 500, 0x81d9e3, 0.12),
+          this.addZone(2580, 330, 620, 550, 0x81d9e3, 0.1)
+        ]
+        : [];
+      this.windZones = this.worldId === "mars"
+        ? [this.addZone(1240, 360, 680, 500, 0xef9a69, 0.1),
+          this.addZone(3100, 350, 720, 520, 0xd57659, 0.09)]
+        : [];
+      this.currentZones = this.worldId === "deep"
+        ? [this.addZone(1830, 330, 700, 500, 0x7b8aff, 0.08),
+          this.addZone(3650, 340, 620, 480, 0x81d9e3, 0.08)]
+        : [];
 
       this.checkpoint = this.physics.add.staticImage(2300, 542, art.signal)
         .setDisplaySize(36, 36);
@@ -554,6 +656,12 @@
       this.lowGravityZones.forEach((zone) => {
         this.physics.add.overlap(this.player, zone, () => { this.inLowGravity = true; });
       });
+      this.windZones.forEach((zone) => {
+        this.physics.add.overlap(this.player, zone, () => { this.inWind = true; });
+      });
+      this.currentZones.forEach((zone) => {
+        this.physics.add.overlap(this.player, zone, () => { this.inCurrent = true; });
+      });
       this.physics.add.overlap(this.player, this.checkpoint, this.saveCheckpoint, null, this);
       this.physics.add.overlap(this.player, this.goal, this.finishCourse, null, this);
 
@@ -567,34 +675,7 @@
         alsep: [art.alsep, 216, 171],
         surveyor: [art.surveyor, 190, 174]
       };
-      this.stationLabels = {};
-      this.lunarStations = lunar.stations.map((station) => {
-        const [texture, width, height] = machineArt[station.id];
-        this.add.ellipse(station.x, this.parkour.groundY + 9, width * 0.9, 22, 0x10182c, 0.34)
-          .setDepth(1);
-        const glow = this.add.image(station.x, station.y - 20, art.signal)
-          .setDisplaySize(48, 48)
-          .setAlpha(0.42)
-          .setDepth(1.2);
-        this.tweens.add({ targets: glow, alpha: 0.82, scale: 1.2, duration: 1200, yoyo: true, repeat: -1 });
-        this.add.image(station.x, station.y, texture)
-          .setDisplaySize(width, height)
-          .setDepth(2);
-        this.stationLabels[station.id] = this.add.text(station.x, station.y - height / 2 - 30, station.title, {
-          color: "#fff1ce",
-          fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
-          fontSize: "18px",
-          fontStyle: "bold",
-          stroke: "#202944",
-          strokeThickness: 4
-        }).setOrigin(0.5).setDepth(3);
-        return {
-          ...station,
-          completed: journalIds.includes(station.id),
-          dialogueSeen: false,
-          journalSaved: journalIds.includes(station.id)
-        };
-      });
+      this.createMissionStations(machineArt);
 
       [
         [510, 550, 120], [600, 500, 120], [510, 450, 120], [600, 400, 120]
@@ -612,7 +693,7 @@
       ].forEach(([x, y, width]) => this.addStaticPlatform(x, y, width));
       this.surveyorPads = this.physics.add.staticGroup();
       const surveyor = lunar.stations.find((station) => station.id === "surveyor");
-      this.surveyorPad = this.surveyorPads.create(surveyor.padX, surveyor.padY, art.platform);
+      this.surveyorPad = this.surveyorPads.create(surveyor.padX, surveyor.padY, this.platformTexture);
       this.surveyorPad.setDisplaySize(190, 30).refreshBody();
       this.physics.add.collider(this.player, this.surveyorPads, this.onSurveyorPad, null, this);
       this.nightShade = this.add.rectangle(surveyor.x + 150, 360, 760, 720, 0x071024, 0)
@@ -623,9 +704,390 @@
         .setDepth(3.2);
     }
 
+    createMissionStations(machineArt) {
+      this.stationLabels = {};
+      this.stations = lunar.stations.map((station) => {
+        const [texture, width, height] = machineArt[station.id];
+        this.add.ellipse(station.x, this.parkour.groundY + 9, width * 0.9, 22, 0x10182c, 0.34)
+          .setDepth(1);
+        const glow = this.add.image(station.x, station.y - 20, art.signal)
+          .setDisplaySize(48, 48)
+          .setAlpha(0.42)
+          .setDepth(1.2);
+        this.tweens.add({ targets: glow, alpha: 0.82, scale: 1.2, duration: 1200, yoyo: true, repeat: -1 });
+        this.add.image(station.x, station.y, texture)
+          .setDisplaySize(width, height)
+          .setDepth(2);
+        this.stationLabels[station.id] = this.add.text(station.x, station.y - height / 2 - 30, station.title, {
+          color: this.worldId === "mars" ? "#ffe0bb" : "#fff1ce",
+          fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+          fontSize: "18px",
+          fontStyle: "bold",
+          stroke: "#202944",
+          strokeThickness: 4
+        }).setOrigin(0.5).setDepth(3);
+        return {
+          ...station,
+          completed: journalIds.includes(station.id),
+          dialogueSeen: false,
+          journalSaved: journalIds.includes(station.id)
+        };
+      });
+    }
+
+    createMarsEncounters() {
+      const machineArt = {
+        pathfinder: [art.pathfinder, 230, 215],
+        rovers: [art.marsRovers, 260, 160],
+        viking: [art.viking, 230, 205],
+        insight: [art.insight, 255, 190],
+        ingenuity: [art.ingenuity, 185, 185]
+      };
+      this.createMissionStations(machineArt);
+      this.marsActiveTrial = null;
+      this.pathfinderBounces = 0;
+      this.marsAirbags = this.physics.add.staticGroup();
+      [710, 850, 990].forEach((x, index) => {
+        const pad = this.marsAirbags.create(x, this.parkour.groundY - 30, art.marsAirbag);
+        pad.setDisplaySize(124, 56).refreshBody().setDepth(3);
+        pad.challengeIndex = index;
+        this.add.circle(x, this.parkour.groundY - 30, 39, 0xf3b27e, 0.1)
+          .setStrokeStyle(2, 0xffd5a5, 0.55).setDepth(2.8);
+      });
+      this.physics.add.collider(this.player, this.marsAirbags, this.touchMarsAirbag, null, this);
+
+      const roverStation = this.getStation("rovers");
+      this.roverSunGlow = this.add.circle(roverStation.x + 98, roverStation.y - 72, 24, 0xffdf9a, 0.82)
+        .setStrokeStyle(3, 0xfff0c4, 0.92).setDepth(3.2);
+      this.roverSunShutter = this.add.rectangle(roverStation.x + 98, roverStation.y - 72, 64, 15, 0x5c3941, 0.9)
+        .setDepth(3.3);
+      this.roverProgressVisuals = [0, 1, 2].map((index) =>
+        this.add.circle(roverStation.x + 48 + index * 36, this.parkour.groundY - 34, 8, 0x49343f, 0.9)
+          .setStrokeStyle(2, 0xffdfa4, 0.8).setDepth(3.3)
+      );
+
+      const viking = this.getStation("viking");
+      this.vikingArmContainer = this.add.container(viking.x + 74, this.parkour.groundY - 115)
+        .setDepth(4).setVisible(false);
+      const arm = this.add.graphics();
+      arm.lineStyle(12, 0xd4c19b, 1);
+      arm.beginPath();
+      arm.moveTo(0, 0);
+      arm.lineTo(34, -22);
+      arm.lineTo(66, -22);
+      arm.strokePath();
+      arm.fillStyle(0x536273, 1);
+      arm.fillCircle(0, 0, 11);
+      arm.fillStyle(0xe2c18f, 1);
+      arm.fillRoundedRect(60, -29, 22, 14, 4);
+      arm.lineStyle(2, 0xffebc3, 0.95);
+      arm.strokeCircle(0, 0, 12);
+      this.vikingArmContainer.add(arm);
+      this.vikingTarget = this.add.circle(viking.x + 160, this.parkour.groundY - 22, 14, 0xf6c482, 0.85)
+        .setStrokeStyle(3, 0xfff2d2, 0.9).setDepth(3.5).setVisible(false);
+
+      const insight = this.getStation("insight");
+      this.insightSignal = this.add.image(insight.x + 125, insight.y - 10, art.signal)
+        .setDisplaySize(44, 44).setAlpha(0.65).setDepth(3.2);
+      this.tweens.add({ targets: this.insightSignal, scale: 1.24, alpha: 0.22, duration: 1000, yoyo: true, repeat: -1 });
+
+      const helicopter = this.getStation("ingenuity");
+      this.ingenuityGates = lunar.settings.ingenuityGateHeights.map((height, index) => {
+        const x = helicopter.x + [80, 210, 350][index];
+        const ring = this.add.circle(x, height, 33, 0xf7d08d, 0.12)
+          .setStrokeStyle(5, 0xffe6ae, 0.85).setDepth(4);
+        this.add.image(x, height, art.signal).setDisplaySize(30, 30).setDepth(4.1);
+        return { x, y: height, ring, passed: false };
+      });
+      this.ingenuityGateIndex = 0;
+      this.marsStormShade = this.add.rectangle(640, 360, 1280, 720, 0x743c39, 0.08)
+        .setScrollFactor(0).setDepth(8);
+    }
+
+    createDeepSpaceEncounters() {
+      const machineArt = {
+        dawn: [art.dawn, 250, 178],
+        near: [art.near, 230, 180],
+        pioneer: [art.pioneer, 240, 190],
+        kepler: [art.kepler, 230, 180],
+        voyager: [art.voyager, 250, 190]
+      };
+      this.createMissionStations(machineArt);
+      this.deepActiveTrial = null;
+      this.deepAsteroids = [];
+      for (let index = 0; index < 30; index += 1) {
+        const x = 1320 + index * 108;
+        const y = 110 + ((index * 83) % 310);
+        const size = 27 + ((index * 17) % 40);
+        const asteroid = this.add.image(x, y, art.deepAsteroid)
+          .setDisplaySize(size, size * 0.82)
+          .setScrollFactor(0.64)
+          .setDepth(-18.5)
+          .setAlpha(0.5 + (index % 4) * 0.1);
+        this.deepAsteroids.push(asteroid);
+        this.tweens.add({
+          targets: asteroid,
+          angle: index % 2 ? 18 : -18,
+          duration: 3800 + (index % 5) * 410,
+          yoyo: true,
+          repeat: -1,
+          ease: "Sine.inOut"
+        });
+      }
+
+      const dawn = this.getStation("dawn");
+      this.dawnGates = [110, 250, 390].map((offset) => {
+        const x = dawn.x + offset;
+        const y = this.parkour.groundY - 180;
+        const ring = this.add.circle(x, y, 29, 0x8fe8ff, 0.12)
+          .setStrokeStyle(4, 0xbaf4ff, 0.9).setDepth(4);
+        this.add.image(x, y, art.signal).setDisplaySize(24, 24).setDepth(4.1);
+        return { x, y, ring };
+      });
+
+      const near = this.getStation("near");
+      this.nearLandingMark = this.add.circle(
+        near.x + 82, lunar.settings.nearLandingY, 39, 0x9fe5d0, 0.14
+      ).setStrokeStyle(4, 0xc1ffed, 0.95).setDepth(4);
+      this.add.image(near.x + 82, lunar.settings.nearLandingY, art.signal)
+        .setDisplaySize(26, 26).setDepth(4.1);
+      this.add.image(near.x + 260, this.parkour.groundY - 35, art.deepAsteroid)
+        .setDisplaySize(380, 235).setDepth(1.6).setAlpha(0.88);
+
+      const pioneer = this.getStation("pioneer");
+      this.pioneerGates = [125, 270, 420].map((offset, index) => {
+        const x = pioneer.x + offset;
+        const y = this.parkour.groundY - [120, 210, 135][index];
+        const ring = this.add.circle(x, y, 31, 0xf0cd98, 0.12)
+          .setStrokeStyle(4, 0xffe6ae, 0.95).setDepth(4);
+        this.add.image(x, y, art.signal).setDisplaySize(24, 24).setDepth(4.1);
+        return { x, y, ring };
+      });
+
+      const kepler = this.getStation("kepler");
+      this.keplerStar = this.add.image(kepler.x + 155, kepler.y - 185, art.deepStar)
+        .setDisplaySize(116, 116).setDepth(4);
+      this.keplerPlanet = this.add.circle(
+        kepler.x + 155, kepler.y - 185, 15, 0x392f59, 1
+      ).setStrokeStyle(2, 0xf0cd98, 0.9).setDepth(4.2);
+
+      const voyager = this.getStation("voyager");
+      this.voyagerGates = [
+        [voyager.x + 110, this.parkour.groundY - 175, art.deepGasGiant],
+        [voyager.x + 255, this.parkour.groundY - 295, art.deepRingedPlanet],
+        [voyager.x + 405, this.parkour.groundY - 205, art.deepGasGiant]
+      ].map(([x, y, texture], index) => {
+        this.add.image(x, y, texture)
+          .setDisplaySize(index === 1 ? 142 : 118, index === 1 ? 100 : 92)
+          .setDepth(3.2);
+        const ring = this.add.circle(x, y, 43, 0x9fe5d0, 0.12)
+          .setStrokeStyle(4, 0xbaf4ff, 0.9).setDepth(4.1);
+        return { x, y, ring };
+      });
+    }
+
+    handleDeepSpaceInteraction(time) {
+      if (this.deepActiveTrial) return;
+      const station = this.nearStation;
+      if (!station || station.completed) return;
+      if (!station.dialogueSeen) {
+        station.dialogueSeen = true;
+        this.startDialogue(station.id);
+        return;
+      }
+
+      this.startDeepSpaceTrial(station, time);
+    }
+
+    startDeepSpaceTrial(station, time) {
+      this.deepActiveTrial = station.id;
+      this.deepTrialStation = station;
+      this.nearStation = null;
+      if (station.id === "pioneer") {
+        this.pioneerGateIndex = 0;
+        this.statusText.setText(lunar.challenge.pioneerCross);
+        return;
+      }
+      if (station.id === "kepler") {
+        this.keplerTrialStartedAt = time;
+        this.keplerTransits = 0;
+        this.keplerLastAttempt = -1;
+        this.rhythmPanel.setVisible(true);
+        this.rhythmText.setText(lunar.challenge.keplerTransit);
+        this.statusText.setText(lunar.challenge.keplerTransit);
+        this.player.body.setVelocity(0, 0);
+        this.player.body.setAccelerationX(0);
+        this.player.body.setAllowGravity(false);
+        return;
+      }
+
+      const starts = {
+        dawn: [station.x - 150, this.parkour.groundY - 180],
+        near: [station.x - 68, 232],
+        voyager: [station.x - 100, this.parkour.groundY - 165]
+      };
+      const [x, y] = starts[station.id];
+      this.deepFlightCraft = this.add.sprite(x, y, art[station.id])
+        .setDisplaySize(station.id === "near" ? 114 : 112, station.id === "near" ? 90 : 88)
+        .setDepth(5.4);
+      this.deepFlightVelocity = station.id === "near" ? 118 : 0;
+      this.deepGateIndex = 0;
+      this.player.body.enable = false;
+      this.player.setVisible(false);
+      this.tuerca.setVisible(false);
+      this.cameras.main.startFollow(this.deepFlightCraft, true, 0.12, 0.12);
+      if (station.id === "dawn") {
+        this.statusText.setText(lunar.challenge.dawnThrust);
+      } else if (station.id === "near") {
+        this.statusText.setText(lunar.challenge.nearDescend);
+      } else {
+        this.statusText.setText(lunar.challenge.voyagerFly);
+      }
+    }
+
+    updateDeepSpaceTrial(time, delta, direction, jumpHeld, jumpPressed) {
+      const dt = Math.min(delta / 1000, 0.04);
+      if (this.deepActiveTrial === "dawn") {
+        this.deepFlightVelocity = Phaser.Math.Clamp(
+          this.deepFlightVelocity + direction * 92 * dt, 0, 220
+        );
+        this.deepFlightCraft.x += this.deepFlightVelocity * dt;
+        this.deepFlightCraft.y = this.dawnGates[0].y + Math.sin(time * 0.002) * 3;
+        this.deepFlightCraft.setAngle(Math.sin(time * 0.002) * 2);
+        const gate = this.dawnGates[this.deepGateIndex];
+        if (gate && this.deepFlightCraft.x >= gate.x) {
+          gate.ring.setStrokeStyle(4, 0x9fe5d0, 1).setFillStyle(0x9fe5d0, 0.42);
+          this.deepGateIndex += 1;
+          this.sparkles.emitParticleAt(gate.x, gate.y, 12);
+          this.statusText.setText(lunar.challenge.dawnProgress
+            .replace("{current}", String(this.deepGateIndex))
+            .replace("{total}", String(this.dawnGates.length)));
+          if (this.deepGateIndex >= this.dawnGates.length) this.finishDeepSpaceFlight();
+        }
+      } else if (this.deepActiveTrial === "near") {
+        this.deepFlightCraft.x = Phaser.Math.Clamp(
+          this.deepFlightCraft.x + direction * 185 * dt,
+          this.deepTrialStation.x - 140,
+          this.deepTrialStation.x + 210
+        );
+        this.deepFlightVelocity = Phaser.Math.Clamp(
+          this.deepFlightVelocity + (jumpHeld ? -210 : 95) * dt, 40, 205
+        );
+        this.deepFlightCraft.y += this.deepFlightVelocity * dt;
+        this.deepFlightCraft.setAngle(Phaser.Math.Clamp(direction * 8, -8, 8));
+        if (this.deepFlightCraft.y >= lunar.settings.nearLandingY) {
+          const aligned = Math.abs(this.deepFlightCraft.x - this.nearLandingMark.x)
+            <= lunar.settings.nearTargetRadius;
+          if (aligned && this.deepFlightVelocity <= lunar.settings.nearSafeSpeed) {
+            this.nearLandingMark.setFillStyle(0x9fe5d0, 0.55);
+            this.sparkles.emitParticleAt(this.nearLandingMark.x, this.nearLandingMark.y, 22);
+            this.finishDeepSpaceFlight();
+          } else {
+            this.deepFlightCraft.setPosition(this.deepTrialStation.x - 68, 232).setAngle(0);
+            this.deepFlightVelocity = 118;
+            this.statusText.setText(lunar.challenge.nearRetry);
+          }
+        }
+      } else if (this.deepActiveTrial === "kepler") {
+        const elapsed = Math.max(0, time - this.keplerTrialStartedAt);
+        const beat = Math.floor(elapsed / lunar.settings.keplerBeatMs);
+        const phase = (elapsed % lunar.settings.keplerBeatMs) / lunar.settings.keplerBeatMs;
+        const inTransit = Math.abs(phase - lunar.settings.keplerTargetPhase)
+          <= lunar.settings.keplerWindow;
+        this.rhythmPointer.setX(470 + phase * 340);
+        this.keplerStar.setAlpha(inTransit ? 0.38 : 1);
+        this.keplerPlanet.setPosition(
+          this.keplerStar.x - 45 + phase * 90,
+          this.keplerStar.y
+        );
+        if (jumpPressed && beat > this.keplerLastAttempt) {
+          this.keplerLastAttempt = beat;
+          if (inTransit) {
+            this.keplerTransits += 1;
+            this.sparkles.emitParticleAt(this.keplerStar.x, this.keplerStar.y, 11);
+            this.rhythmText.setText(lunar.challenge.keplerProgress
+              .replace("{current}", String(this.keplerTransits))
+              .replace("{total}", String(lunar.settings.keplerRequiredTransits)));
+            if (this.keplerTransits >= lunar.settings.keplerRequiredTransits) {
+              this.deepActiveTrial = null;
+              this.rhythmPanel.setVisible(false);
+              this.player.body.setAllowGravity(true);
+              this.completeMissionStation(this.getStation("kepler"));
+            }
+          } else {
+            this.rhythmText.setText(lunar.challenge.keplerMiss);
+          }
+        }
+      } else if (this.deepActiveTrial === "voyager") {
+        const flight = this.deepFlightCraft;
+        const gate = this.voyagerGates[this.deepGateIndex];
+        flight.x += (82 + this.deepGateIndex * 32 + direction * 58) * dt;
+        flight.y = Phaser.Math.Clamp(
+          flight.y + (Phaser.Math.Clamp((gate.y - flight.y) * 1.1, -140, 140)
+            + (jumpHeld ? -90 : 0)) * dt,
+          this.parkour.groundY - 355,
+          this.parkour.groundY - 70
+        );
+        flight.setAngle(direction * -7 + Math.sin(time * 0.005) * 2);
+        if (gate && Phaser.Math.Distance.Between(flight.x, flight.y, gate.x, gate.y)
+          <= lunar.settings.voyagerGateRadius) {
+          gate.ring.setStrokeStyle(4, 0x9fe5d0, 1).setFillStyle(0x9fe5d0, 0.42);
+          this.deepGateIndex += 1;
+          this.sparkles.emitParticleAt(gate.x, gate.y, 17);
+          this.statusText.setText(lunar.challenge.voyagerProgress
+            .replace("{current}", String(this.deepGateIndex))
+            .replace("{total}", String(this.voyagerGates.length)));
+          if (this.deepGateIndex >= this.voyagerGates.length) this.finishDeepSpaceFlight();
+        } else if (gate && flight.x > gate.x + lunar.settings.voyagerGateRadius * 2) {
+          this.deepFlightCraft.setPosition(
+            this.deepTrialStation.x - 100, this.parkour.groundY - 165
+          );
+          this.deepFlightCraft.setAngle(0);
+          this.deepGateIndex = 0;
+          this.statusText.setText(lunar.challenge.voyagerFly);
+        }
+      }
+    }
+
+    updatePioneerTrial() {
+      if (this.deepActiveTrial !== "pioneer") return;
+      const gate = this.pioneerGates[this.pioneerGateIndex];
+      if (!gate || Phaser.Math.Distance.Between(
+        this.player.x, this.player.y, gate.x, gate.y
+      ) > lunar.settings.pioneerGateRadius) return;
+
+      gate.ring.setStrokeStyle(4, 0x9fe5d0, 1).setFillStyle(0x9fe5d0, 0.42);
+      this.pioneerGateIndex += 1;
+      this.sparkles.emitParticleAt(gate.x, gate.y, 14);
+      this.statusText.setText(lunar.challenge.pioneerProgress
+        .replace("{current}", String(this.pioneerGateIndex))
+        .replace("{total}", String(this.pioneerGates.length)));
+      if (this.pioneerGateIndex >= this.pioneerGates.length) {
+        this.deepActiveTrial = null;
+        this.completeMissionStation(this.getStation("pioneer"));
+      }
+    }
+
+    finishDeepSpaceFlight() {
+      const station = this.deepTrialStation;
+      this.deepActiveTrial = null;
+      if (this.deepFlightCraft) {
+        this.deepFlightCraft.destroy();
+        this.deepFlightCraft = null;
+      }
+      this.player.body.enable = true;
+      this.player.setVisible(true).setPosition(station.x + 52, this.parkour.groundY - 72);
+      this.player.body.reset(this.player.x, this.player.y);
+      this.player.body.setAllowGravity(true).setVelocity(0, 0);
+      this.tuerca.setVisible(true).setPosition(this.player.x - 52, this.player.y + 12);
+      this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
+      this.completeMissionStation(station);
+    }
+
     updateNearbyStation() {
-      if (this.dialogueOpen || this.missionCardOpen || this.lrvDriving || this.alsepActive || this.surveyorActive) return;
-      const station = this.lunarStations.find((candidate) => {
+      if (this.dialogueOpen || this.missionCardOpen || this.lrvDriving || this.alsepActive
+        || this.surveyorActive || this.marsActiveTrial || this.deepActiveTrial) return;
+      const station = this.stations.find((candidate) => {
         if (candidate.completed) return false;
         const distance = Phaser.Math.Distance.Between(
           this.player.x, this.player.y, candidate.promptX, candidate.promptY
@@ -639,7 +1101,7 @@
         : lunar.hint);
     }
 
-    handleLunarInteraction(time) {
+    handleStationInteraction(time) {
       if (this.missionCardOpen) {
         this.closeMissionCard();
         return;
@@ -648,11 +1110,19 @@
         this.advanceDialogue();
         return;
       }
+      if (this.worldId === "mars") {
+        this.handleMarsInteraction(time);
+        return;
+      }
+      if (this.worldId === "deep") {
+        this.handleDeepSpaceInteraction(time);
+        return;
+      }
       if (this.lrvDriving || this.alsepActive) return;
 
       if (this.surveyorActive) {
         if (this.surveyorNightReady) {
-          this.completeLunarStation(this.getStation("surveyor"));
+          this.completeMissionStation(this.getStation("surveyor"));
         }
         return;
       }
@@ -668,7 +1138,7 @@
         const atPlaque = Phaser.Math.Distance.Between(
           this.player.x, this.player.y, station.plaqueX, station.plaqueY
         ) <= 145;
-        if (atPlaque) this.completeLunarStation(station);
+        if (atPlaque) this.completeMissionStation(station);
         else this.showStatus(lunar.challenge.lmTooLow);
       } else if (station.id === "lrv") {
         this.startLrvTrial(station);
@@ -693,8 +1163,252 @@
       }
     }
 
+    handleMarsInteraction(time) {
+      if (this.marsActiveTrial) {
+        if (this.marsActiveTrial === "rovers") this.trySolarAlignment(time);
+        else if (this.marsActiveTrial === "viking") this.tryVikingSample();
+        return;
+      }
+
+      const station = this.nearStation;
+      if (!station || station.completed) return;
+      if (!station.dialogueSeen) {
+        station.dialogueSeen = true;
+        this.startDialogue(station.id);
+        return;
+      }
+
+      this.startMarsChallenge(station, time);
+    }
+
+    startMarsChallenge(station, time) {
+      this.marsActiveTrial = station.id;
+      this.marsTrialBlockInput = true;
+      this.nearStation = null;
+      if (station.id === "pathfinder") {
+        this.pathfinderBounces = 0;
+        this.statusText.setText(lunar.challenge.pathfinderBounce);
+        this.updatePathfinderProgress();
+      } else if (station.id === "rovers") {
+        this.roverTrialStartedAt = time;
+        this.roverSunbeams = 0;
+        this.roverLastAttempt = -1;
+        this.rhythmPanel.setVisible(true);
+        this.rhythmText.setText(lunar.challenge.roverAlign);
+        this.statusText.setText(lunar.challenge.roverAlign);
+        this.player.body.setVelocity(0, 0);
+        this.player.body.setAccelerationX(0);
+        this.player.body.setAllowGravity(false);
+      } else if (station.id === "viking") {
+        this.vikingArmAngle = 0;
+        this.vikingSamples = 0;
+        this.vikingArmContainer.setRotation(0).setVisible(true);
+        this.vikingTarget.setVisible(true);
+        this.updateVikingTarget();
+        this.player.body.setVelocity(0, 0);
+        this.player.body.setAccelerationX(0);
+        this.player.body.setAllowGravity(false);
+        this.statusText.setText(lunar.challenge.vikingAim);
+      } else if (station.id === "insight") {
+        this.insightTrialStartedAt = time;
+        this.insightPulses = 0;
+        this.insightLastAttempt = -1;
+        this.rhythmPanel.setVisible(true);
+        this.rhythmText.setText(lunar.challenge.insightListen);
+        this.statusText.setText(lunar.challenge.insightListen);
+        this.player.body.setVelocity(0, 0);
+        this.player.body.setAccelerationX(0);
+        this.player.body.setAllowGravity(false);
+      } else if (station.id === "ingenuity") {
+        this.ingenuityGateIndex = 0;
+        this.ingenuityGates.forEach((gate) => gate.ring.setAlpha(0.9));
+        this.player.body.enable = false;
+        this.player.setVisible(false);
+        this.tuerca.setVisible(false);
+        this.ingenuityFlight = this.add.sprite(
+          station.x - 100, this.parkour.groundY - 160, art.ingenuity
+        ).setDisplaySize(100, 100).setDepth(5.4);
+        this.cameras.main.startFollow(this.ingenuityFlight, true, 0.12, 0.12);
+        this.statusText.setText(lunar.challenge.ingenuityFly);
+      }
+    }
+
+    touchMarsAirbag(player, pad) {
+      if (player.body.velocity.y < 0) return;
+      player.body.setVelocityY(-this.parkour.trampolineVelocity * 0.82);
+      this.airJumps = 1;
+      this.dust.emitParticleAt(pad.x, pad.y - 20, 12);
+      this.cameras.main.shake(100, 0.0015);
+      if (this.marsActiveTrial !== "pathfinder" || pad.challengeIndex !== this.pathfinderBounces) return;
+
+      this.pathfinderBounces += 1;
+      pad.setTint(0xffe6b5);
+      this.sparkles.emitParticleAt(pad.x, pad.y - 25, 16);
+      this.updatePathfinderProgress();
+      if (this.pathfinderBounces >= lunar.settings.pathfinderRequiredBounces) {
+        this.marsActiveTrial = null;
+        this.completeMissionStation(this.getStation("pathfinder"));
+      }
+    }
+
+    updatePathfinderProgress() {
+      this.statusText.setText(lunar.challenge.pathfinderProgress
+        .replace("{current}", String(this.pathfinderBounces))
+        .replace("{total}", String(lunar.settings.pathfinderRequiredBounces)));
+    }
+
+    trySolarAlignment(time) {
+      const cycle = lunar.settings.roverCycleMs;
+      const elapsed = Math.max(0, time - this.roverTrialStartedAt);
+      const cycleIndex = Math.floor(elapsed / cycle);
+      if (cycleIndex <= this.roverLastAttempt) return;
+      this.roverLastAttempt = cycleIndex;
+      const phase = (elapsed % cycle) / cycle;
+      if (phase < lunar.settings.roverWindowStart || phase > lunar.settings.roverWindowEnd) {
+        this.rhythmText.setText(lunar.challenge.roverMiss);
+        return;
+      }
+
+      this.roverSunbeams += 1;
+      this.roverProgressVisuals[this.roverSunbeams - 1].setFillStyle(0xffdf9a, 1);
+      this.roverSunShutter.setVisible(false);
+      this.sparkles.emitParticleAt(this.roverSunGlow.x, this.roverSunGlow.y, 10);
+      this.rhythmText.setText(lunar.challenge.roverProgress
+        .replace("{current}", String(this.roverSunbeams))
+        .replace("{total}", String(lunar.settings.roverRequiredSunbeams)));
+      if (this.roverSunbeams >= lunar.settings.roverRequiredSunbeams) {
+        this.marsActiveTrial = null;
+        this.rhythmPanel.setVisible(false);
+        this.player.body.setAllowGravity(true);
+        this.completeMissionStation(this.getStation("rovers"));
+      } else {
+        this.roverSunShutter.setVisible(true);
+      }
+    }
+
+    updateVikingTarget() {
+      const targetAngles = [-lunar.settings.vikingArmStep, 0, lunar.settings.vikingArmStep];
+      const angle = targetAngles[Math.min(this.vikingSamples, targetAngles.length - 1)];
+      const viking = this.getStation("viking");
+      this.vikingTarget.setPosition(
+        viking.x + 98 + angle * 115,
+        this.parkour.groundY - 20
+      );
+    }
+
+    tryVikingSample() {
+      const targetAngles = [-lunar.settings.vikingArmStep, 0, lunar.settings.vikingArmStep];
+      const targetAngle = targetAngles[Math.min(this.vikingSamples, targetAngles.length - 1)];
+      if (Math.abs(this.vikingArmAngle - targetAngle) > 0.2) {
+        this.showStatus(lunar.challenge.vikingMiss);
+        return;
+      }
+
+      this.vikingSamples += 1;
+      this.sparkles.emitParticleAt(this.vikingTarget.x, this.vikingTarget.y, 12);
+      this.vikingTarget.setFillStyle(0xa6e4c9, 0.95);
+      if (this.vikingSamples >= lunar.settings.vikingRequiredSamples) {
+        this.marsActiveTrial = null;
+        this.vikingArmContainer.setVisible(false);
+        this.vikingTarget.setVisible(false);
+        this.player.body.setAllowGravity(true);
+        this.statusText.setText(lunar.challenge.vikingProgress
+          .replace("{current}", String(this.vikingSamples))
+          .replace("{total}", String(lunar.settings.vikingRequiredSamples)));
+        this.completeMissionStation(this.getStation("viking"));
+        return;
+      }
+      this.statusText.setText(lunar.challenge.vikingProgress
+        .replace("{current}", String(this.vikingSamples))
+        .replace("{total}", String(lunar.settings.vikingRequiredSamples)));
+      this.updateVikingTarget();
+      this.vikingTarget.setFillStyle(0xf6c482, 0.85);
+    }
+
+    updateMarsTrial(time, delta, direction, jumpPressed, jumpHeld) {
+      const dt = Math.min(delta / 1000, 0.04);
+      if (this.marsStormShade) {
+        this.marsStormShade.setAlpha(0.04 + (Math.sin(time * 0.00055) + 1) * 0.09);
+      }
+      if (this.marsTrialBlockInput) {
+        this.marsTrialBlockInput = false;
+        jumpPressed = false;
+      }
+
+      if (this.marsActiveTrial === "rovers") {
+        const phase = ((time - this.roverTrialStartedAt) % lunar.settings.roverCycleMs)
+          / lunar.settings.roverCycleMs;
+        this.rhythmPointer.setX(470 + phase * 340);
+        this.roverSunShutter.setVisible(
+          phase < lunar.settings.roverWindowStart || phase > lunar.settings.roverWindowEnd
+        );
+      } else if (this.marsActiveTrial === "viking") {
+        this.vikingArmAngle = Phaser.Math.Clamp(
+          this.vikingArmAngle + direction * dt * 1.65, -0.84, 0.84
+        );
+        this.vikingArmContainer.setRotation(this.vikingArmAngle);
+      } else if (this.marsActiveTrial === "insight") {
+        const elapsed = Math.max(0, time - this.insightTrialStartedAt);
+        const beat = Math.floor(elapsed / lunar.settings.insightBeatMs);
+        const phase = (elapsed % lunar.settings.insightBeatMs) / lunar.settings.insightBeatMs;
+        this.rhythmPointer.setX(470 + phase * 340);
+        if (jumpPressed && beat > this.insightLastAttempt) {
+          this.insightLastAttempt = beat;
+          if (Math.abs(phase - lunar.settings.insightTargetPhase) <= lunar.settings.insightWindow) {
+            this.insightPulses += 1;
+            this.sparkles.emitParticleAt(this.insightSignal.x, this.insightSignal.y, 9);
+            this.rhythmText.setText(lunar.challenge.insightProgress
+              .replace("{current}", String(this.insightPulses))
+              .replace("{total}", String(lunar.settings.insightRequiredPulses)));
+            if (this.insightPulses >= lunar.settings.insightRequiredPulses) {
+              this.marsActiveTrial = null;
+              this.rhythmPanel.setVisible(false);
+              this.player.body.setAllowGravity(true);
+              this.completeMissionStation(this.getStation("insight"));
+            }
+          } else {
+            this.rhythmText.setText(lunar.challenge.insightMiss);
+          }
+        }
+      } else if (this.marsActiveTrial === "ingenuity") {
+        const flight = this.ingenuityFlight;
+        flight.x = Phaser.Math.Clamp(flight.x + direction * 250 * dt, 4110, this.parkour.worldWidth - 60);
+        flight.y = Phaser.Math.Clamp(
+          flight.y + (jumpHeld ? -150 : 78) * dt,
+          this.parkour.groundY - 330,
+          this.parkour.groundY - 48
+        );
+        flight.setAngle(direction * -7 + Math.sin(time * 0.006) * 2);
+        const gate = this.ingenuityGates[this.ingenuityGateIndex];
+        if (gate && Phaser.Math.Distance.Between(flight.x, flight.y, gate.x, gate.y)
+          <= lunar.settings.ingenuityGateRadius) {
+          gate.ring.setStrokeStyle(5, 0x9fe5c7, 1).setFillStyle(0x9fe5c7, 0.42);
+          this.ingenuityGateIndex += 1;
+          this.sparkles.emitParticleAt(gate.x, gate.y, 16);
+          this.statusText.setText(lunar.challenge.ingenuityProgress
+            .replace("{current}", String(this.ingenuityGateIndex))
+            .replace("{total}", String(this.ingenuityGates.length)));
+          if (this.ingenuityGateIndex >= this.ingenuityGates.length) this.finishIngenuityTrial();
+        }
+      }
+    }
+
+    finishIngenuityTrial() {
+      this.marsActiveTrial = null;
+      this.ingenuityFlight.destroy();
+      this.ingenuityFlight = null;
+      const station = this.getStation("ingenuity");
+      this.player.body.enable = true;
+      this.player.setVisible(true).setPosition(station.x - 82, this.parkour.groundY - 70);
+      this.player.body.reset(this.player.x, this.player.y);
+      this.player.body.setAllowGravity(true).setVelocity(0, 0);
+      this.tuerca.setVisible(true).setPosition(this.player.x - 52, this.player.y + 12);
+      this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
+      this.completeMissionStation(station);
+    }
+
     getStation(id) {
-      return this.lunarStations.find((station) => station.id === id);
+      return this.stations.find((station) => station.id === id);
     }
 
     startLrvTrial(station) {
@@ -740,7 +1454,7 @@
           .replace("{total}", String(this.lrvGates.length)));
       }
       if (this.lrvVehicle.x >= this.getStation("lrv").finishX) {
-        this.completeLunarStation(this.getStation("lrv"));
+        this.completeMissionStation(this.getStation("lrv"));
       }
     }
 
@@ -762,7 +1476,7 @@
         if (this.alsepHits >= lunar.settings.alsepRequiredPulses) {
           this.alsepActive = false;
           this.rhythmPanel.setVisible(false);
-          this.completeLunarStation(this.getStation("alsep"));
+          this.completeMissionStation(this.getStation("alsep"));
         }
       } else {
         this.rhythmText.setText(lunar.challenge.alsepMiss);
@@ -802,12 +1516,12 @@
       });
     }
 
-    completeLunarStation(station) {
+    completeMissionStation(station) {
       if (!station || station.completed) return;
-      if (station.id === "lrv") this.endLrvTrial();
+      if (this.worldId === "moon" && station.id === "lrv") this.endLrvTrial();
       station.completed = true;
       station.journalSaved = saveJournalEntry(station.id);
-      if (station.id === "surveyor") this.surveyorActive = false;
+      if (this.worldId === "moon" && station.id === "surveyor") this.surveyorActive = false;
       this.updateStats();
       this.showMissionCard(station);
     }
@@ -887,27 +1601,58 @@
     }
 
     closeMissionCard() {
+      const opensVoyagerFinale = this.worldId === "deep"
+        && this.missionCardStationId === "voyager";
       this.missionCardOpen = false;
       this.missionCardLayer.destroy(true);
       this.missionCardLayer = null;
       this.missionCardStationId = null;
       this.player.body.setAllowGravity(true);
       this.statusText.setText(
-        this.lunarStations.every((station) => station.completed)
+        this.stations.every((station) => station.completed)
           ? lunar.completedHint
           : lunar.hint
       );
-      this.updateNearbyStation();
+      if (opensVoyagerFinale) this.openVoyagerFinale();
+      else this.updateNearbyStation();
+    }
+
+    openVoyagerFinale() {
+      this.voyagerFinaleOpen = true;
+      this.player.body.setVelocity(0, 0);
+      this.player.body.setAllowGravity(false);
+      const layer = this.add.container(0, 0).setScrollFactor(0).setDepth(40);
+      this.voyagerFinaleLayer = layer;
+      layer.add(this.add.rectangle(640, 360, 1280, 720, 0x050914, 0.88));
+      layer.add(this.add.rectangle(640, 360, 1020, 500, 0x111b34, 0.98)
+        .setStrokeStyle(3, 0xb9d8e4, 0.95));
+      layer.add(this.add.circle(640, 212, 48, 0x8ee4f2, 0.2)
+        .setStrokeStyle(2, 0xb7f3ff, 0.8));
+      layer.add(this.add.circle(640, 212, 15, 0x8ee4f2, 0.95));
+      layer.add(this.add.text(640, 292, lunar.finaleTitle, {
+        color: "#f0cd98", fontFamily: "Georgia, Times New Roman, serif",
+        fontSize: "30px", fontStyle: "bold", align: "center",
+        wordWrap: { width: 900 }
+      }).setOrigin(0.5));
+      layer.add(this.add.text(640, 398, lunar.finaleMessage, {
+        color: "#fff8ec", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "22px", lineSpacing: 12, align: "center",
+        wordWrap: { width: 850 }
+      }).setOrigin(0.5));
+      layer.add(this.add.text(640, 568, lunar.finaleClose, {
+        color: "#b9d8e4", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", fontStyle: "bold", align: "center"
+      }).setOrigin(0.5));
     }
 
     addStaticPlatform(x, y, width) {
-      const platform = this.platforms.create(x, y, art.platform);
+      const platform = this.platforms.create(x, y, this.platformTexture);
       platform.setDisplaySize(width, 30).refreshBody();
       return platform;
     }
 
     addFallingPlatform(x, y) {
-      const platform = this.fallingPlatforms.create(x, y, art.platform);
+      const platform = this.fallingPlatforms.create(x, y, this.platformTexture);
       platform.setDisplaySize(170, 28);
       platform.body.setSize(170, 28).setAllowGravity(false).setImmovable(true);
       platform.isFalling = false;
@@ -915,7 +1660,7 @@
     }
 
     addMovingPlatform(x, y, width, distance, duration) {
-      const platform = this.movingPlatforms.create(x, y, art.platform);
+      const platform = this.movingPlatforms.create(x, y, this.platformTexture);
       platform.setDisplaySize(width, 28);
       platform.body.setSize(width, 28).setAllowGravity(false).setImmovable(true);
       this.tweens.add({
@@ -930,13 +1675,13 @@
     }
 
     addSpring(x, y) {
-      const spring = this.springs.create(x, y, art.spring);
+      const spring = this.springs.create(x, y, this.springTexture);
       spring.setDisplaySize(150, 30).refreshBody();
       return spring;
     }
 
     addWall(x, y, width, height) {
-      const wall = this.platforms.create(x, y, art.platform);
+      const wall = this.platforms.create(x, y, this.platformTexture);
       wall.setDisplaySize(width, height).refreshBody();
       return wall;
     }
@@ -1000,7 +1745,10 @@
         stroke: "#10172a",
         strokeThickness: 4
       };
-      this.expeditionLabelText = this.add.text(28, 20, data.text.expeditionLabel, {
+      this.expeditionLabelText = this.add.text(28, 20,
+        this.worldId === "mars" ? data.text.marsExpeditionLabel
+          : this.worldId === "deep" ? data.text.deepSpaceExpeditionLabel
+            : data.text.expeditionLabel, {
         ...fixedText, color: "#f0cd98", fontSize: "18px", letterSpacing: 2
       }).setScrollFactor(0).setDepth(10);
       this.worldTitleText = this.add.text(28, 49, lunar.title, {
@@ -1035,7 +1783,10 @@
       this.rhythmPanel.add(this.rhythmText);
       this.rhythmPanel.add(this.add.rectangle(640, 480, 340, 12, 0x35415d, 1)
         .setStrokeStyle(1, 0x8ea6ba, 0.9));
-      this.rhythmPanel.add(this.add.rectangle(640 + (340 * lunar.settings.alsepTargetPhase) - 170, 480, 46, 22, 0xf0cd98, 0.94)
+      const targetPhase = this.worldId === "mars" ? lunar.settings.insightTargetPhase
+        : this.worldId === "deep" ? lunar.settings.keplerTargetPhase
+          : lunar.settings.alsepTargetPhase;
+      this.rhythmPanel.add(this.add.rectangle(640 + (340 * targetPhase) - 170, 480, 46, 22, 0xf0cd98, 0.94)
         .setStrokeStyle(2, 0xfff3cf, 1));
       this.rhythmPointer = this.add.circle(470, 480, 9, 0x95e3e1, 1)
         .setStrokeStyle(2, 0xf4ffff, 1);
@@ -1125,14 +1876,17 @@
     refreshLanguage() {
       const nearbyId = this.nearStation && this.nearStation.id;
       const cardId = this.missionCardStationId;
-      this.lunarStations.forEach((station) => {
+      this.stations.forEach((station) => {
         const localized = lunar.stations.find((entry) => entry.id === station.id);
         station.title = localized.title;
         station.card = localized.card;
         this.stationLabels[station.id].setText(station.title);
       });
       this.nearStation = nearbyId ? this.getStation(nearbyId) : null;
-      this.expeditionLabelText.setText(data.text.expeditionLabel);
+      this.expeditionLabelText.setText(this.worldId === "mars"
+        ? data.text.marsExpeditionLabel
+        : this.worldId === "deep" ? data.text.deepSpaceExpeditionLabel
+          : data.text.expeditionLabel);
       this.worldTitleText.setText(lunar.title);
       this.helpText.setText(data.text.parkourStart);
       this.languageButtonLabel.setText(data.text.languageButton);
@@ -1143,7 +1897,38 @@
         this.dialogueLines = lunar.dialogues[this.dialogueId];
         this.showDialogueLine();
       }
-      if (this.lrvDriving) {
+      if (this.worldId === "mars" && this.marsActiveTrial === "pathfinder") {
+        this.updatePathfinderProgress();
+      } else if (this.worldId === "mars" && this.marsActiveTrial === "rovers") {
+        this.statusText.setText(lunar.challenge.roverAlign);
+        this.rhythmText.setText(lunar.challenge.roverProgress
+          .replace("{current}", String(this.roverSunbeams))
+          .replace("{total}", String(lunar.settings.roverRequiredSunbeams)));
+      } else if (this.worldId === "mars" && this.marsActiveTrial === "viking") {
+        this.statusText.setText(lunar.challenge.vikingAim);
+      } else if (this.worldId === "mars" && this.marsActiveTrial === "insight") {
+        this.statusText.setText(lunar.challenge.insightListen);
+        this.rhythmText.setText(lunar.challenge.insightProgress
+          .replace("{current}", String(this.insightPulses))
+          .replace("{total}", String(lunar.settings.insightRequiredPulses)));
+      } else if (this.worldId === "mars" && this.marsActiveTrial === "ingenuity") {
+        this.statusText.setText(lunar.challenge.ingenuityFly);
+      } else if (this.worldId === "deep" && this.deepActiveTrial === "dawn") {
+        this.statusText.setText(lunar.challenge.dawnThrust);
+      } else if (this.worldId === "deep" && this.deepActiveTrial === "near") {
+        this.statusText.setText(lunar.challenge.nearDescend);
+      } else if (this.worldId === "deep" && this.deepActiveTrial === "pioneer") {
+        this.statusText.setText(lunar.challenge.pioneerCross);
+      } else if (this.worldId === "deep" && this.deepActiveTrial === "kepler") {
+        this.statusText.setText(lunar.challenge.keplerTransit);
+        this.rhythmText.setText(this.keplerTransits
+          ? lunar.challenge.keplerProgress
+            .replace("{current}", String(this.keplerTransits))
+            .replace("{total}", String(lunar.settings.keplerRequiredTransits))
+          : lunar.challenge.keplerTransit);
+      } else if (this.worldId === "deep" && this.deepActiveTrial === "voyager") {
+        this.statusText.setText(lunar.challenge.voyagerFly);
+      } else if (this.lrvDriving) {
         this.statusText.setText(lunar.challenge.lrvDrive);
       } else if (this.alsepActive) {
         this.statusText.setText(lunar.challenge.alsepListen);
@@ -1165,6 +1950,10 @@
       if (this.missionCardOpen) {
         this.missionCardLayer.destroy(true);
         this.showMissionCard(this.getStation(cardId));
+      }
+      if (this.voyagerFinaleOpen) {
+        this.voyagerFinaleLayer.destroy(true);
+        this.openVoyagerFinale();
       }
     }
 
@@ -1201,14 +1990,18 @@
         tint: [0xff9f86, 0xffd66e, 0x92e4c2, 0x9fc8ff, 0xe7a9ff]
       });
       this.ambientDust = this.add.particles(0, 0, art.dust, {
-        speedX: { min: -13, max: 13 },
-        speedY: { min: -12, max: 3 },
-        scale: { min: 0.25, max: 0.65 },
-        alpha: { start: 0.38, end: 0 },
-        lifespan: 5000,
-        frequency: 110,
-        maxParticles: 54,
-        tint: [0xe8edfa, 0xf6dcae],
+        speedX: this.worldId === "mars" ? { min: -50, max: 65 }
+          : this.worldId === "deep" ? { min: -8, max: 8 } : { min: -13, max: 13 },
+        speedY: this.worldId === "mars" ? { min: -9, max: 12 }
+          : this.worldId === "deep" ? { min: -10, max: 10 } : { min: -12, max: 3 },
+        scale: this.worldId === "mars" ? { min: 0.3, max: 0.9 }
+          : this.worldId === "deep" ? { min: 0.18, max: 0.55 } : { min: 0.25, max: 0.65 },
+        alpha: { start: this.worldId === "mars" ? 0.5 : 0.38, end: 0 },
+        lifespan: this.worldId === "mars" ? 3800 : this.worldId === "deep" ? 6200 : 5000,
+        frequency: this.worldId === "mars" ? 65 : this.worldId === "deep" ? 135 : 110,
+        maxParticles: this.worldId === "mars" ? 100 : this.worldId === "deep" ? 78 : 54,
+        tint: this.worldId === "mars" ? [0xf1a36e, 0xd87955, 0xf5c38b]
+          : this.worldId === "deep" ? [0x9fe5e1, 0xaeb8ff, 0xe9ddff] : [0xe8edfa, 0xf6dcae],
         emitZone: {
           type: "random",
           source: new Phaser.Geom.Rectangle(0, 0, this.parkour.worldWidth, 720)
@@ -1277,6 +2070,8 @@
 
     finishCourse() {
       if (this.completed) return;
+      if (this.worldId === "deep" && this.stations
+        && !this.stations.every((station) => station.completed)) return;
       this.completed = true;
       this.playerCelebrateUntil = Number.POSITIVE_INFINITY;
       this.tuercaCelebrateUntil = Number.POSITIVE_INFINITY;
@@ -1296,9 +2091,9 @@
     }
 
     updateStats() {
-      const missions = this.lunarStations.filter((station) => station.completed).length;
+      const missions = this.stations.filter((station) => station.completed).length;
       this.statsText.setText(
-        `${data.text.parkourStars}: ${this.echoStars}     ${data.text.parkourBatteries}: ${"●".repeat(this.batteries)}${"○".repeat(3 - this.batteries)}     ${lunar.progressLabel}: ${missions}/${this.lunarStations.length}`
+        `${data.text.parkourStars}: ${this.echoStars}     ${data.text.parkourBatteries}: ${"●".repeat(this.batteries)}${"○".repeat(3 - this.batteries)}     ${lunar.progressLabel}: ${missions}/${this.stations.length}`
       );
     }
 
@@ -1389,13 +2184,18 @@
         return;
       }
 
+      if (this.voyagerFinaleOpen) {
+        if (interactPressed) this.scene.start("MenuScene");
+        return;
+      }
+
       if (this.missionCardOpen) {
         if (interactPressed) this.closeMissionCard();
         return;
       }
 
       this.updateNearbyStation();
-      if (interactPressed) this.handleLunarInteraction(time);
+      if (interactPressed) this.handleStationInteraction(time);
       if (this.missionCardOpen) return;
       if (this.lrvDriving) {
         this.updateLrvTrial(direction, jumpPressed);
@@ -1403,6 +2203,16 @@
       }
       if (this.alsepActive) {
         this.updateAlsep(time, jumpPressed);
+        return;
+      }
+      if (this.worldId === "mars" && this.marsActiveTrial
+        && this.marsActiveTrial !== "pathfinder") {
+        this.updateMarsTrial(time, delta, direction, jumpPressed, jumpHeld);
+        return;
+      }
+      if (this.worldId === "deep" && this.deepActiveTrial
+        && this.deepActiveTrial !== "pioneer") {
+        this.updateDeepSpaceTrial(time, delta, direction, jumpHeld, jumpPressed);
         return;
       }
 
@@ -1432,7 +2242,14 @@
         ? (grounded ? this.parkour.groundFriction : this.parkour.groundFriction * 0.16)
         : 0);
       if (wallSliding) body.setVelocityY(Math.min(body.velocity.y, 170));
-      if (this.inWind) body.setAccelerationX(body.acceleration.x + 110);
+      if (this.inWind) {
+        const gust = Math.sin(time * 0.0007) >= 0 ? 125 : -125;
+        body.setAccelerationX(body.acceleration.x + gust);
+      }
+      if (this.inCurrent) {
+        body.setAccelerationX(body.acceleration.x + Math.sin(time * 0.0006) * 145);
+        body.setAccelerationY(Math.cos(time * 0.00045) * 135);
+      } else body.setAccelerationY(0);
 
       const atApex = Math.abs(body.velocity.y) < 105;
       const gravityScale = (this.inLowGravity ? this.parkour.lowGravityScale : 1)
@@ -1465,6 +2282,7 @@
       this.wasJumpHeld = jumpHeld;
       this.inLowGravity = false;
       this.inWind = false;
+      this.inCurrent = false;
       this.cameras.main.setFollowOffset(direction < 0 ? -90 : 120, 0);
 
       if (grounded && !this.wasGrounded) {
@@ -1504,6 +2322,10 @@
       this.wasGrounded = grounded;
       this.player.setAngle(Phaser.Math.Clamp(body.velocity.x * 0.018, -7, 7));
       this.updateCharacterArt(time, grounded, direction);
+      this.updatePioneerTrial();
+      if (this.marsStormShade) {
+        this.marsStormShade.setAlpha(0.035 + (Math.sin(time * 0.00055) + 1) * 0.075);
+      }
 
       if (this.player.y > this.parkour.rescueY - 30) this.rescuePlayer();
       if (this.surveyorActive && this.surveyorSoftLanding && !this.surveyorNightReady
