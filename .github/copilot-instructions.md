@@ -107,3 +107,31 @@ Mejora 2: dificultad y emoción (12.2).
 Mejora 3: gancho, mensaje oculto y apertura (12.1).
 Mejora 4: cinemáticas (12.4).
 Mejora 5: prueba completa y corrección de errores.
+Mejora 6: fichas de misión cortas y responsivas (12.7).
+### 12.7 Fichas de misión cortas (para TODOS los dispositivos)
+Problema: la ficha actual es demasiado larga para chicos de 6 a 12 años. Hay que dividirla en dos niveles.
+
+NIVEL 1, "ficha rápida" (aparece sola al completar el encuentro):
+- Máximo 45 palabras en total, oraciones de 12 palabras como máximo, vocabulario de un chico de 8 años.
+- Contenido: nombre del equipo; una frase gancho en primera persona (ej.: "I carried two astronauts to the Moon."); tres líneas cortas con ícono dibujado por código: QUÉ ERA, POR QUÉ SE QUEDÓ y QUÉ HIZO; y una etiqueta de estado de color según corresponda (ej.: "Resting on the Moon", "Silent", "Still talking").
+- A la izquierda, el dibujo grande del propio equipo con brillo; a la derecha, el texto. En pantallas angostas (celular vertical), el dibujo arriba y el texto abajo.
+- Las líneas aparecen una por una (animación corta). Un toque las completa.
+- Botón grande "Continue" y otro más discreto "More info". Sin enlaces largos a la vista.
+- Si el encuentro revela una palabra del mensaje oculto (sección 12.1), se muestra al final con una animación.
+
+NIVEL 2, "Más info" (opcional, también accesible desde el Diario):
+- Acá va el texto completo y preciso que ya existe (cómo funcionaba, qué se aprendió, qué pasó después) y el enlace oficial de la NASA como botón "Official NASA page" que abre en una pestaña nueva.
+- Los matices (por ejemplo "la fuente no lista un descubrimiento específico") van SOLO acá. En la ficha rápida se escribe lo esencial, sin frases de duda, y siempre verdadero según la fuente de la sección 4.
+
+Reglas de diseño:
+- Texto de al menos 20 px, con contraste alto, fondo oscuro semitransparente.
+- Al abrirse, la ficha atenúa u oculta el HUD y los textos de ayuda del fondo para que no se mezclen.
+- Responsiva: debe verse y poder cerrarse bien en celular (vertical y horizontal), tablet y computadora; botones táctiles de al menos 44 px; nada se corta ni se solapa. Se cierra con toque, Enter, E o ESC.
+- Los datos viven en datos.js: cada equipo tiene campos "corta" (gancho, qué era, por qué se quedó, qué hizo, estado) y "larga" (texto completo y fuente), en inglés y español.
+
+Ejemplo de ficha rápida (Apollo 11, Eagle):
+- Gancho: "I carried two astronauts to the Moon."
+- Qué era: "A two-part Moon lander."
+- Por qué se quedó: "My lower half stayed behind as a launch pad."
+- Qué hizo: "I set Armstrong and Aldrin down on the Moon."
+- Estado: "Resting on the Moon".

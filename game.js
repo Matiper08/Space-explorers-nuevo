@@ -256,6 +256,21 @@
       journalButton.on("pointerdown", () => this.openJournal());
       journalLabel.setInteractive({ useHandCursor: true }).on("pointerdown", () => this.openJournal());
 
+      const resetJournalButton = this.add.rectangle(1060, 580, 220, 44, 0x382a3a, 0.24)
+        .setStrokeStyle(1, 0xd49aaa, 0.34)
+        .setInteractive({ useHandCursor: true });
+      const resetJournalLabel = this.add.text(1060, 580, data.text.journalResetButton, {
+        color: "#e6d9e0",
+        fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px",
+        align: "center"
+      }).setOrigin(0.5);
+      resetJournalButton.on("pointerover", () => resetJournalButton.setFillStyle(0x563443, 0.42));
+      resetJournalButton.on("pointerout", () => resetJournalButton.setFillStyle(0x382a3a, 0.24));
+      resetJournalButton.on("pointerdown", () => this.confirmJournalReset());
+      resetJournalLabel.setInteractive({ useHandCursor: true })
+        .on("pointerdown", () => this.confirmJournalReset());
+
       this.add.text(640, 674, data.text.footer, {
         color: "#d0d5e0",
         fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
@@ -285,6 +300,82 @@
 
     openJournal() {
       this.scene.start("JournalScene");
+    }
+
+    confirmJournalReset() {
+      const overlay = this.add.container(0, 0).setDepth(20);
+      const backdrop = this.add.rectangle(640, 360, 1280, 720, 0x050914, 0.78)
+        .setInteractive();
+      const panel = this.add.rectangle(640, 360, 620, 250, 0x142238, 0.98)
+        .setStrokeStyle(2, 0x83d9e8, 0.72);
+      overlay.add([backdrop, panel]);
+      overlay.add(this.add.text(640, 284, data.text.journalResetTitle, {
+        color: "#fff8ec",
+        fontFamily: "Georgia, Times New Roman, serif",
+        fontSize: "30px",
+        fontStyle: "bold",
+        align: "center",
+        wordWrap: { width: 540 }
+      }).setOrigin(0.5));
+      overlay.add(this.add.text(640, 338, data.text.journalResetPrompt, {
+        color: "#e4e6ed",
+        fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px",
+        align: "center",
+        wordWrap: { width: 520 }
+      }).setOrigin(0.5));
+
+      let escapeHandler;
+      const close = () => {
+        this.input.keyboard.off("keydown-ESC", escapeHandler);
+        overlay.destroy();
+      };
+      const showResult = (message, color) => {
+        close();
+        this.add.text(1060, 625, message, {
+          color,
+          fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+          fontSize: "16px",
+          align: "center",
+          wordWrap: { width: 230 }
+        }).setOrigin(0.5);
+      };
+      const cancel = this.add.rectangle(540, 422, 190, 48, 0x38536a, 0.76)
+        .setStrokeStyle(1, 0x9ac9d3, 0.62)
+        .setInteractive({ useHandCursor: true });
+      const cancelLabel = this.add.text(540, 422, data.text.journalResetCancel, {
+        color: "#f0f3f5",
+        fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px",
+        align: "center"
+      }).setOrigin(0.5);
+      const confirm = this.add.rectangle(740, 422, 190, 48, 0x754153, 0.76)
+        .setStrokeStyle(1, 0xe7a8b8, 0.62)
+        .setInteractive({ useHandCursor: true });
+      const confirmLabel = this.add.text(740, 422, data.text.journalResetConfirm, {
+        color: "#fff1f2",
+        fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px",
+        align: "center"
+      }).setOrigin(0.5);
+      overlay.add([cancel, cancelLabel, confirm, confirmLabel]);
+      const cancelReset = () => close();
+      const clearJournal = () => {
+        try {
+          window.localStorage.removeItem(journalStorageKey);
+          journalIds = [];
+          showResult(data.text.journalResetSuccess, "#c8f0d7");
+        } catch (error) {
+          console.error("Could not reset the Ecoscope Journal:", error);
+          showResult(data.text.journalResetError, "#ffd2c6");
+        }
+      };
+      cancel.on("pointerdown", cancelReset);
+      cancelLabel.setInteractive({ useHandCursor: true }).on("pointerdown", cancelReset);
+      confirm.on("pointerdown", clearJournal);
+      confirmLabel.setInteractive({ useHandCursor: true }).on("pointerdown", clearJournal);
+      escapeHandler = cancelReset;
+      this.input.keyboard.once("keydown-ESC", escapeHandler);
     }
 
     openSystemMap() {
@@ -2138,6 +2229,7 @@
       this.languageButton.on("pointerdown", () => this.toggleLanguage());
       this.languageButton.on("pointerover", () => this.languageButton.setFillStyle(0x17496c, 0.52));
       this.languageButton.on("pointerout", () => this.languageButton.setFillStyle(0x10213e, 0.34));
+      this.createPauseIcon();
       this.createTouchControls();
       this.rhythmPanel = this.add.container(0, 0).setScrollFactor(0).setDepth(12).setVisible(false);
       this.rhythmPanel.add(this.add.rectangle(640, 465, 580, 112, 0x111a31, 0.94)
@@ -2185,29 +2277,54 @@
 
     createTouchControls() {
       this.touchControlsLayer = this.add.container(0, 0).setScrollFactor(0).setDepth(14);
-      this.touchControlLabels = {};
       this.touchButtons = {};
-      this.addTouchButton("left", 72, 622, data.text.touchLeft);
-      this.addTouchButton("right", 182, 622, data.text.touchRight);
-      this.addTouchButton("jump", 1090, 622, data.text.touchJump);
-      this.addTouchButton("interact", 1202, 622, data.text.touchAction);
+      this.addTouchButton("left", 72, 622);
+      this.addTouchButton("right", 182, 622);
+      this.addTouchButton("jump", 1090, 622);
+      this.addTouchButton("interact", 1202, 622);
+      this.touchButtons.interact.forEach((control) => control.setVisible(false));
     }
 
-    addTouchButton(action, x, y, label) {
+    createPauseIcon() {
+      const icon = this.add.graphics().setPosition(1010, 34).setScrollFactor(0).setDepth(12);
+      icon.fillStyle(0x10213e, 0.34);
+      icon.fillRoundedRect(-20, -20, 40, 40, 10);
+      icon.lineStyle(2, 0x72e9ff, 0.44);
+      icon.strokeRoundedRect(-20, -20, 40, 40, 10);
+      icon.fillStyle(0x91f5ff, 0.82);
+      icon.fillRoundedRect(-8, -10, 5, 20, 2);
+      icon.fillRoundedRect(3, -10, 5, 20, 2);
+      return icon;
+    }
+
+    addTouchButton(action, x, y) {
       const button = this.add.rectangle(x, y, 100, 56, 0x12304d, 0.32)
         .setStrokeStyle(2, 0x7ceeff, 0.44)
         .setInteractive({ useHandCursor: true });
-      const buttonLabel = this.add.text(x, y, label, {
-        color: "#fff8ec", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
-        fontSize: "18px", fontStyle: "bold", align: "center",
-        wordWrap: { width: 94 }, stroke: "#08142b", strokeThickness: 3
-      }).setOrigin(0.5).setAlpha(0.82);
-      this.touchControlsLayer.add([button, buttonLabel]);
-      this.touchButtons[action] = [button, buttonLabel];
+      const icon = this.add.graphics().setPosition(x, y);
+      icon.fillStyle(0xe4faff, 0.86);
+      if (action === "left") {
+        icon.fillTriangle(-19, 0, 16, -19, 16, 19);
+      } else if (action === "right") {
+        icon.fillTriangle(19, 0, -16, -19, -16, 19);
+      } else if (action === "jump") {
+        icon.fillTriangle(0, -20, -20, 16, 20, 16);
+      } else {
+        icon.fillRoundedRect(-11, -20, 8, 24, 4);
+        icon.fillCircle(-7, -19, 4);
+        icon.fillRoundedRect(-10, -5, 24, 21, 7);
+        icon.fillRoundedRect(10, -2, 8, 12, 4);
+        icon.lineStyle(2, 0x12304d, 0.78);
+        icon.lineBetween(-6, 2, 11, 2);
+        icon.lineBetween(-6, 8, 11, 8);
+        icon.setAngle(25);
+      }
+      this.touchControlsLayer.add([button, icon]);
+      this.touchButtons[action] = [button, icon];
       const setPressed = (pressed) => {
         button.setFillStyle(pressed ? 0x176f91 : 0x12304d, pressed ? 0.5 : 0.32);
         button.setStrokeStyle(2, pressed ? 0x9af8ff : 0x7ceeff, pressed ? 0.78 : 0.44);
-        buttonLabel.setAlpha(pressed ? 1 : 0.82);
+        icon.setAlpha(pressed ? 1 : 0.8);
       };
       button.on("pointerdown", (pointer) => {
         this.touchInputState[action].add(pointer.id);
@@ -2221,7 +2338,6 @@
       };
       button.on("pointerup", release);
       button.on("pointerupoutside", release);
-      this.touchControlLabels[action] = buttonLabel;
     }
 
     releaseTouchPointer(pointerId) {
@@ -2316,10 +2432,6 @@
       this.worldTitleText.setText(lunar.title);
       this.helpText.setText(data.text.touchControlsHint);
       this.languageButtonLabel.setText(data.text.languageButton);
-      this.touchControlLabels.left.setText(data.text.touchLeft);
-      this.touchControlLabels.right.setText(data.text.touchRight);
-      this.touchControlLabels.jump.setText(data.text.touchJump);
-      this.touchControlLabels.interact.setText(data.text.touchAction);
       this.dialogueContinueText.setText(data.text.dialogueContinue);
       this.updateStats();
 
@@ -2593,8 +2705,13 @@
     update(time, delta) {
       if (this.touchControlsLayer) {
         const overlayOpen = this.dialogueOpen || this.missionCardOpen || this.voyagerFinaleOpen;
+        const interactionAvailable = this.nearStation && !this.nearStation.completed
+          && !this.lrvDriving && !this.alsepActive && !this.surveyorActive
+          && !this.marsActiveTrial && !this.deepActiveTrial;
         Object.keys(this.touchButtons).forEach((action) => {
-          this.touchButtons[action].forEach((control) => control.setVisible(!overlayOpen && !this.completed));
+          const visible = !overlayOpen && !this.completed
+            && (action !== "interact" || Boolean(interactionAvailable));
+          this.touchButtons[action].forEach((control) => control.setVisible(visible));
         });
       }
       if (!this.player) return;
