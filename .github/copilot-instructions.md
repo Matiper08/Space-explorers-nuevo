@@ -76,3 +76,34 @@ H7 Mundo espacio profundo (5 encuentros y final Voyager).
 H8 Menú, mapa del sistema solar, pausa, HUD y controles táctiles.
 H9 Entregables: README.md, CREDITS.md, AI_DISCLOSURE.md, SUBMISSION.md y DEMO_SCRIPT.md en inglés, y publicación en GitHub Pages.
 Si falta tiempo, la prioridad es H1 a H5 y un tramo de H7 con las Voyager.
+## 12. MEJORAS V2 (si hay conflicto con secciones anteriores, esta sección manda)
+
+### 12.1 Gancho y motivación (el jugador tiene que estar jugando en menos de 15 segundos)
+- Apertura de 20 segundos como máximo, salteable con cualquier tecla o toque: pantalla negra, el Ecoscopio hace "pi… pi…" y aparece el texto "…is anyone… still out there?". Maia responde "Who's there?". Corte directo al juego.
+- Misterio central: cada eco recuperado revela UNA palabra de un mensaje oculto de 14 palabras (una por encuentro). Inglés: "We were never forgotten. Thank you for listening. Tell Earth we are still here." Español: "Nunca nos olvidaron. Gracias por escucharnos. Díganle a la Tierra que todavía seguimos aquí." Se muestra en el HUD como una fila de palabras ocultas ("We were ___ ___ ...") que se completa con cada eco. El mensaje entero se ve en la escena final con las Voyager.
+- Progreso global visible: "Ecos recuperados X/14".
+
+### 12.2 Dificultad y emoción (estilo Geometry Dash, adaptado a chicos de 6 a 12 años)
+- Muchos pozos y saltos de precisión en cada mundo (al menos uno cada 8 segundos de juego), plataformas que se caen y tramos con ritmo.
+- Reinicio instantáneo (menos de 1 segundo) en el último checkpoint. Checkpoints cada 15 segundos de juego aproximadamente (banderines que se encienden). Las estrellas recogidas hasta el checkpoint se conservan. Sin game over.
+- Barra de progreso del nivel (porcentaje) y contador de intentos.
+- Casi-fallo: destello y sonido cuando Maia esquiva por poco. Mensaje de ánimo al caer: "¡Casi! ¡Otra vez!". Celebración al superar un tramo difícil.
+- Modo ayuda opcional desde la pausa: más checkpoints.
+- Medallas por nivel: sin caídas, todas las estrellas, todos los ecos.
+
+### 12.3 Colores
+Paleta mucho más vívida y saturada: acentos cian, magenta y dorado sobre fondos profundos, brillo (glow) en objetos importantes, luz de borde en plataformas, alto contraste y un color dominante distinto por mundo. Nada apagado.
+
+### 12.4 Cinemáticas (procedurales, cortas, salteables con cualquier tecla o toque)
+- Al elegir un mundo en el mapa: escena de 4 a 6 segundos con la nave "La Cometa" volando desde la Tierra hacia el destino sobre un fondo con parallax, Maia y Tuerca visibles en la cabina, una línea de diálogo y la llegada. Una distinta por mundo (Luna, Marte y espacio profundo).
+- Apertura (12.1) y escena final, con el mensaje completo y las Voyager.
+
+### 12.5 Interfaz discreta
+Botones táctiles, HUD y menús semitransparentes (opacidad entre 0.25 y 0.4), pequeños, sin colores chillones y sin tapar el juego. Se hacen un poco más visibles solo mientras se tocan.
+
+### 12.6 Mejoras (se piden de a una; dejar siempre el juego FUNCIONANDO)
+Mejora 1: colores e interfaz discreta (12.3 y 12.5).
+Mejora 2: dificultad y emoción (12.2).
+Mejora 3: gancho, mensaje oculto y apertura (12.1).
+Mejora 4: cinemáticas (12.4).
+Mejora 5: prueba completa y corrección de errores.
