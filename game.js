@@ -1323,7 +1323,7 @@
       });
     }
 
-    handleDeepSpaceInteraction(time) {
+    handleDeepSpaceInteraction() {
       if (this.deepActiveTrial) return;
       const station = this.nearStation;
       if (!station || station.completed) return;
@@ -1333,7 +1333,8 @@
         return;
       }
 
-      this.startDeepSpaceTrial(station, time);
+      this.speakInteraction(station, window.SpaceNarrators.interactionKey(this.worldId, station.id),
+        () => this.startDeepSpaceTrial(station, this.time.now));
     }
 
     startDeepSpaceTrial(station, time) {
@@ -1538,7 +1539,7 @@
         : lunar.hint);
     }
 
-    handleStationInteraction(time) {
+    handleStationInteraction() {
       if (this.missionCardOpen) {
         this.closeMissionCard();
         return;
@@ -1548,18 +1549,20 @@
         return;
       }
       if (this.worldId === "mars") {
-        this.handleMarsInteraction(time);
+        this.handleMarsInteraction();
         return;
       }
       if (this.worldId === "deep") {
-        this.handleDeepSpaceInteraction(time);
+        this.handleDeepSpaceInteraction();
         return;
       }
       if (this.lrvDriving || this.alsepActive) return;
 
       if (this.surveyorActive) {
         if (this.surveyorNightReady) {
-          this.completeMissionStation(this.getStation("surveyor"));
+          this.speakInteraction(this.getStation("surveyor"), "surveyorNight", () => {
+            this.completeMissionStation(this.getStation("surveyor"));
+          });
         }
         return;
       }
@@ -1575,34 +1578,41 @@
         const atPlaque = Phaser.Math.Distance.Between(
           this.player.x, this.player.y, station.plaqueX, station.plaqueY
         ) <= 145;
-        if (atPlaque) this.completeMissionStation(station);
-        else this.showStatus(lunar.challenge.lmTooLow);
+        const promptKey = atPlaque ? "lmClimb" : "lmTooLow";
+        this.speakInteraction(station, promptKey, () => {
+          if (atPlaque) this.completeMissionStation(station);
+          else this.showStatus(lunar.challenge.lmTooLow);
+        });
       } else if (station.id === "lrv") {
-        this.startLrvTrial(station);
+        this.speakInteraction(station, "lrvDrive", () => this.startLrvTrial(station));
       } else if (station.id === "alsep") {
-        this.alsepActive = true;
-        this.alsepStartedAt = time;
-        this.alsepHits = 0;
-        this.alsepLastAttempt = -1;
-        this.player.body.setVelocity(0, 0);
-        this.player.body.setAccelerationX(0);
-        this.player.body.setAllowGravity(false);
-        this.rhythmPanel.setVisible(true);
-        this.rhythmText.setText(lunar.challenge.alsepListen);
-        this.statusText.setText(lunar.challenge.alsepListen);
+        this.speakInteraction(station, "alsepListen", () => {
+          this.alsepActive = true;
+          this.alsepStartedAt = this.time.now;
+          this.alsepHits = 0;
+          this.alsepLastAttempt = -1;
+          this.player.body.setVelocity(0, 0);
+          this.player.body.setAccelerationX(0);
+          this.player.body.setAllowGravity(false);
+          this.rhythmPanel.setVisible(true);
+          this.rhythmText.setText(lunar.challenge.alsepListen);
+          this.statusText.setText(lunar.challenge.alsepListen);
+        });
       } else if (station.id === "surveyor") {
-        this.surveyorActive = true;
-        this.surveyorSoftLanding = false;
-        this.surveyorNightReady = false;
-        this.surveyorMaxFallSpeed = 0;
-        this.surveyorLandingHandled = false;
-        this.statusText.setText(lunar.challenge.surveyorLand);
+        this.speakInteraction(station, "surveyorLand", () => {
+          this.surveyorActive = true;
+          this.surveyorSoftLanding = false;
+          this.surveyorNightReady = false;
+          this.surveyorMaxFallSpeed = 0;
+          this.surveyorLandingHandled = false;
+          this.statusText.setText(lunar.challenge.surveyorLand);
+        });
       }
     }
 
-    handleMarsInteraction(time) {
+    handleMarsInteraction() {
       if (this.marsActiveTrial) {
-        if (this.marsActiveTrial === "rovers") this.trySolarAlignment(time);
+        if (this.marsActiveTrial === "rovers") this.trySolarAlignment(this.time.now);
         else if (this.marsActiveTrial === "viking") this.tryVikingSample();
         return;
       }
@@ -1615,7 +1625,8 @@
         return;
       }
 
-      this.startMarsChallenge(station, time);
+      this.speakInteraction(station, window.SpaceNarrators.interactionKey(this.worldId, station.id),
+        () => this.startMarsChallenge(station, this.time.now));
     }
 
     startMarsChallenge(station, time) {
@@ -2253,8 +2264,9 @@
       this.dialoguePanel = this.add.container(0, 0).setScrollFactor(0).setDepth(20).setVisible(false);
       this.dialoguePanel.add(this.add.rectangle(640, 566, 1120, 152, 0x10182c, 0.97)
         .setStrokeStyle(3, 0xe7c89b, 0.95));
-      this.dialoguePanel.add(this.add.rectangle(640, 566, 1098, 130, 0x192641, 0.98)
-        .setStrokeStyle(1, 0x8298b1, 0.7));
+      this.dialogueFrame = this.add.rectangle(640, 566, 1098, 130, 0x192641, 0.98)
+        .setStrokeStyle(1, 0x8298b1, 0.7);
+      this.dialoguePanel.add(this.dialogueFrame);
       this.dialogueSpeakerText = this.add.text(104, 512, "", {
         color: "#f0cd98", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "20px", fontStyle: "bold", letterSpacing: 1
@@ -2354,6 +2366,7 @@
 
     pauseExpedition() {
       this.clearTouchInputs();
+      window.SpaceNarrators.stop();
       this.scene.pause();
       this.scene.launch("PauseScene", { worldId: this.worldId });
     }
@@ -2361,6 +2374,30 @@
     startDialogue(dialogueId) {
       this.dialogueId = dialogueId;
       this.dialogueLines = lunar.dialogues[dialogueId];
+      this.dialogueInteraction = null;
+      this.dialogueOnComplete = null;
+      this.dialogueIndex = 0;
+      this.dialogueOpen = true;
+      this.player.body.setVelocity(0, 0);
+      this.player.body.setAccelerationX(0);
+      this.player.body.setAllowGravity(false);
+      this.jumpBufferTimer = 0;
+      this.dialoguePanel.setVisible(true);
+      this.showDialogueLine();
+    }
+
+    speakInteraction(station, challengeKey, onComplete) {
+      const text = lunar.challenge[challengeKey];
+      if (typeof text !== "string") {
+        throw new RangeError(`Missing narrator text: ${this.worldId}/${station.id}/${challengeKey}`);
+      }
+      this.dialogueId = null;
+      this.dialogueInteraction = { stationId: station.id, challengeKey };
+      this.dialogueOnComplete = onComplete;
+      this.dialogueLines = [{
+        speaker: window.SpaceNarrators.interactionSpeaker(station.id),
+        text
+      }];
       this.dialogueIndex = 0;
       this.dialogueOpen = true;
       this.player.body.setVelocity(0, 0);
@@ -2373,14 +2410,18 @@
 
     showDialogueLine() {
       const line = this.dialogueLines[this.dialogueIndex];
+      const voice = window.SpaceNarrators.voiceFor(line.speaker);
+      window.SpaceNarrators.speak(line.speaker, line.text, data.language);
       if (this.dialogueEvent) this.dialogueEvent.remove(false);
       this.dialogueSpeakerText.setText(line.speaker);
+      this.dialogueSpeakerText.setColor(voice.color);
+      this.dialogueFrame.setStrokeStyle(3, Phaser.Display.Color.HexStringToColor(voice.color).color, 0.95);
       this.dialogueText.setText("");
       this.dialogueContinueText.setText(data.text.dialogueContinue);
       this.dialogueIndexChar = 0;
       this.dialogueReady = false;
       this.dialogueEvent = this.time.addEvent({
-        delay: 28,
+        delay: voice.interval,
         repeat: Math.max(0, line.text.length - 1),
         callback: () => {
           this.dialogueIndexChar += 1;
@@ -2403,7 +2444,12 @@
         this.dialogueOpen = false;
         this.dialoguePanel.setVisible(false);
         this.player.body.setAllowGravity(true);
-        this.updateNearbyStation();
+        window.SpaceNarrators.stop();
+        const onComplete = this.dialogueOnComplete;
+        this.dialogueOnComplete = null;
+        this.dialogueInteraction = null;
+        if (onComplete) onComplete();
+        else this.updateNearbyStation();
         return;
       }
       this.showDialogueLine();
@@ -2436,7 +2482,12 @@
       this.updateStats();
 
       if (this.dialogueOpen) {
-        this.dialogueLines = lunar.dialogues[this.dialogueId];
+        this.dialogueLines = this.dialogueInteraction
+          ? [{
+            speaker: window.SpaceNarrators.interactionSpeaker(this.dialogueInteraction.stationId),
+            text: lunar.challenge[this.dialogueInteraction.challengeKey]
+          }]
+          : lunar.dialogues[this.dialogueId];
         this.showDialogueLine();
       }
       if (this.worldId === "mars" && this.marsActiveTrial === "pathfinder") {
@@ -2766,7 +2817,7 @@
       }
 
       this.updateNearbyStation();
-      if (interactPressed) this.handleStationInteraction(time);
+      if (interactPressed) this.handleStationInteraction();
       if (this.missionCardOpen) return;
       if (this.lrvDriving) {
         this.updateLrvTrial(direction, jumpPressed);
