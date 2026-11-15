@@ -175,9 +175,9 @@ window.SpaceArt = {
 
   drawSky(ctx, width = 1280, height = 720) {
     const sky = ctx.createLinearGradient(0, 0, 0, height);
-    sky.addColorStop(0, "#10172f");
-    sky.addColorStop(0.52, "#303958");
-    sky.addColorStop(1, "#a9a9bb");
+    sky.addColorStop(0, "#090f2b");
+    sky.addColorStop(0.52, "#273f78");
+    sky.addColorStop(1, "#91b8dc");
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, width, height);
 
@@ -232,9 +232,9 @@ window.SpaceArt = {
       [[0, 552], [170, 496], [350, 549], [525, 464], [760, 550], [945, 470], [1100, 535], [1280, 465]]
     ];
     const palette = [
-      ["#525b79", "#262e4a"],
-      ["#70758d", "#363d5a"],
-      ["#9999a8", "#444c68"]
+      ["#405b9f", "#1a2d61"],
+      ["#5e83c5", "#27467f"],
+      ["#a7c7e8", "#365b98"]
     ][layer];
     const points = paths[layer];
     const gradient = ctx.createLinearGradient(0, 320, 0, 720);
@@ -258,7 +258,7 @@ window.SpaceArt = {
     ctx.closePath();
     ctx.fill();
     ctx.shadowBlur = 0;
-    ctx.strokeStyle = layer === 2 ? "rgba(224, 231, 244, 0.34)" : "rgba(212, 225, 248, 0.16)";
+    ctx.strokeStyle = layer === 2 ? "rgba(181, 244, 255, 0.72)" : "rgba(111, 204, 255, 0.34)";
     ctx.lineWidth = layer === 2 ? 4 : 2;
     ctx.stroke();
     ctx.restore();
@@ -266,10 +266,10 @@ window.SpaceArt = {
 
   drawRegolith(ctx) {
     const ground = ctx.createLinearGradient(0, 500, 0, 720);
-    ground.addColorStop(0, "rgba(199, 193, 197, 0)");
-    ground.addColorStop(0.2, "#88889b");
-    ground.addColorStop(0.56, "#5c637e");
-    ground.addColorStop(1, "#252e49");
+    ground.addColorStop(0, "rgba(164, 220, 255, 0)");
+    ground.addColorStop(0.2, "#729dcc");
+    ground.addColorStop(0.56, "#3c5e9d");
+    ground.addColorStop(1, "#14264f");
     ctx.fillStyle = ground;
     ctx.beginPath();
     ctx.moveTo(0, 583);
@@ -280,7 +280,7 @@ window.SpaceArt = {
     ctx.lineTo(0, 720);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = "rgba(223, 229, 244, 0.22)";
+    ctx.fillStyle = "rgba(158, 232, 255, 0.38)";
     for (let i = 0; i < 60; i += 1) {
       const x = (i * 173 + 32) % 1280;
       const y = 566 + ((i * 59) % 140);
@@ -290,7 +290,7 @@ window.SpaceArt = {
     }
     for (let i = 0; i < 6; i += 1) {
       const x = 95 + i * 202;
-      ctx.strokeStyle = "rgba(204, 220, 244, 0.12)";
+      ctx.strokeStyle = "rgba(106, 202, 255, 0.28)";
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.ellipse(x, 626 + (i % 2) * 17, 26 + (i % 3) * 7, 5, -0.08, 0, Math.PI * 2);
@@ -626,22 +626,26 @@ window.SpaceArt = {
     ctx.shadowColor = "rgba(9, 18, 38, 0.5)";
     ctx.shadowBlur = 9;
     const face = ctx.createLinearGradient(0, 2, 0, 39);
-    face.addColorStop(0, "#e1e5dc");
-    face.addColorStop(0.2, "#b8c8d0");
-    face.addColorStop(0.55, "#8298aa");
-    face.addColorStop(1, "#425873");
+    face.addColorStop(0, "#d8fbff");
+    face.addColorStop(0.2, "#82e4f2");
+    face.addColorStop(0.55, "#438fc1");
+    face.addColorStop(1, "#233f79");
     ctx.fillStyle = face;
     ctx.beginPath();
     ctx.roundRect(2, 3, 276, 34, 10);
     ctx.fill();
     ctx.restore();
-    ctx.strokeStyle = "rgba(250, 253, 233, 0.82)";
-    ctx.lineWidth = 2;
+    ctx.save();
+    ctx.shadowColor = "rgba(80, 225, 255, 0.9)";
+    ctx.shadowBlur = 9;
+    ctx.strokeStyle = "rgba(186, 250, 255, 0.98)";
+    ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(12, 8);
     ctx.lineTo(268, 8);
     ctx.stroke();
-    ctx.fillStyle = "#405875";
+    ctx.restore();
+    ctx.fillStyle = "#1f3a70";
     ctx.fillRect(8, 25, 264, 9);
     ctx.fillStyle = "#f4d8a2";
     for (let x = 19; x < 280; x += 38) {
@@ -652,14 +656,18 @@ window.SpaceArt = {
   },
 
   drawSpring(ctx) {
+    ctx.save();
+    ctx.shadowColor = "rgba(73, 236, 255, 0.9)";
+    ctx.shadowBlur = 12;
     const spring = ctx.createLinearGradient(0, 1, 0, 34);
     spring.addColorStop(0, "#f8f2d8");
-    spring.addColorStop(0.28, "#a8e7e7");
-    spring.addColorStop(1, "#477d94");
+    spring.addColorStop(0.28, "#82efff");
+    spring.addColorStop(1, "#315aa0");
     ctx.fillStyle = spring;
     ctx.beginPath();
     ctx.roundRect(2, 4, 176, 28, 11);
     ctx.fill();
+    ctx.restore();
     ctx.fillStyle = "rgba(255,255,255,0.75)";
     ctx.beginPath();
     ctx.roundRect(11, 7, 158, 6, 4);
@@ -1232,10 +1240,10 @@ window.SpaceArt = {
 
   drawMarsSky(ctx, width = 1280, height = 720) {
     const sky = ctx.createLinearGradient(0, 0, 0, height);
-    sky.addColorStop(0, "#f7bf76");
-    sky.addColorStop(0.38, "#dc875f");
-    sky.addColorStop(0.72, "#a45249");
-    sky.addColorStop(1, "#54394a");
+    sky.addColorStop(0, "#ffc45e");
+    sky.addColorStop(0.38, "#ff8046");
+    sky.addColorStop(0.72, "#d33e59");
+    sky.addColorStop(1, "#4b214b");
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, width, height);
 
@@ -1270,9 +1278,9 @@ window.SpaceArt = {
 
   drawMarsRidge(ctx, layer) {
     const palettes = [
-      ["#c6755d", "#8d514f", "#69444d"],
-      ["#b96750", "#82434a", "#583748"],
-      ["#b65c42", "#7b3b3e", "#4b323e"]
+      ["#f28a45", "#c64c50", "#672653"],
+      ["#e95d3f", "#a93456", "#4f2051"],
+      ["#ff7040", "#ce354d", "#431d47"]
     ];
     const colors = palettes[layer];
     const gradient = ctx.createLinearGradient(0, 260, 0, 690);
@@ -1321,7 +1329,7 @@ window.SpaceArt = {
     ctx.closePath();
     ctx.fill();
     ctx.shadowBlur = 0;
-    ctx.strokeStyle = layer === 2 ? "rgba(255, 194, 139, 0.38)" : "rgba(255, 210, 169, 0.22)";
+    ctx.strokeStyle = layer === 2 ? "rgba(255, 216, 106, 0.78)" : "rgba(255, 134, 97, 0.42)";
     ctx.lineWidth = layer === 2 ? 4 : 2;
     ctx.stroke();
     if (layer < 2) {
@@ -1344,9 +1352,9 @@ window.SpaceArt = {
     ctx.shadowColor = "rgba(80, 42, 48, 0.28)";
     ctx.shadowBlur = 22;
     const mountain = ctx.createLinearGradient(0, 115, 0, 500);
-    mountain.addColorStop(0, "#ce8065");
-    mountain.addColorStop(0.35, "#aa6255");
-    mountain.addColorStop(1, "#744650");
+    mountain.addColorStop(0, "#ffad53");
+    mountain.addColorStop(0.35, "#e65b4b");
+    mountain.addColorStop(1, "#672650");
     ctx.fillStyle = mountain;
     ctx.beginPath();
     ctx.moveTo(0, 458);
@@ -1368,7 +1376,7 @@ window.SpaceArt = {
     ctx.closePath();
     ctx.fill();
     ctx.restore();
-    ctx.strokeStyle = "rgba(255, 202, 155, 0.38)";
+    ctx.strokeStyle = "rgba(255, 220, 111, 0.68)";
     ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.moveTo(385, 365);
@@ -1392,10 +1400,10 @@ window.SpaceArt = {
     ctx.shadowColor = "rgba(55, 24, 34, 0.38)";
     ctx.shadowBlur = 18;
     const wall = ctx.createLinearGradient(0, 50, 0, 520);
-    wall.addColorStop(0, "#df8964");
-    wall.addColorStop(0.24, "#b85d4d");
-    wall.addColorStop(0.68, "#783d48");
-    wall.addColorStop(1, "#4d3442");
+    wall.addColorStop(0, "#ff9d54");
+    wall.addColorStop(0.24, "#e84d49");
+    wall.addColorStop(0.68, "#852751");
+    wall.addColorStop(1, "#421b48");
     ctx.fillStyle = wall;
     ctx.beginPath();
     ctx.moveTo(0, 496);
@@ -1415,7 +1423,7 @@ window.SpaceArt = {
     ctx.closePath();
     ctx.fill();
     ctx.restore();
-    ctx.strokeStyle = "rgba(255, 199, 144, 0.42)";
+    ctx.strokeStyle = "rgba(255, 193, 91, 0.65)";
     ctx.lineWidth = 4;
     for (let i = 0; i < 9; i += 1) {
       const y = 255 + i * 26;
@@ -1435,10 +1443,10 @@ window.SpaceArt = {
 
   drawMarsRegolith(ctx) {
     const ground = ctx.createLinearGradient(0, 520, 0, 720);
-    ground.addColorStop(0, "rgba(191, 94, 58, 0)");
-    ground.addColorStop(0.18, "#b45c3f");
-    ground.addColorStop(0.58, "#803f3c");
-    ground.addColorStop(1, "#492f3b");
+    ground.addColorStop(0, "rgba(255, 127, 70, 0)");
+    ground.addColorStop(0.18, "#ef603c");
+    ground.addColorStop(0.58, "#a8324b");
+    ground.addColorStop(1, "#3b1b42");
     ctx.fillStyle = ground;
     ctx.beginPath();
     ctx.moveTo(0, 586);
@@ -1459,7 +1467,7 @@ window.SpaceArt = {
       ctx.ellipse(x, y, rx, 2 + (i % 3), -0.13, 0, Math.PI * 2);
       ctx.fill();
     }
-    ctx.strokeStyle = "rgba(250, 182, 128, 0.2)";
+    ctx.strokeStyle = "rgba(255, 194, 81, 0.42)";
     ctx.lineWidth = 2;
     for (let i = 0; i < 7; i += 1) {
       const x = 74 + i * 189;
@@ -1483,10 +1491,10 @@ window.SpaceArt = {
     ctx.shadowColor = "rgba(56, 27, 33, 0.55)";
     ctx.shadowBlur = 9;
     const rock = ctx.createLinearGradient(0, 0, 0, 40);
-    rock.addColorStop(0, "#f0ac70");
-    rock.addColorStop(0.25, "#c9754e");
-    rock.addColorStop(0.68, "#914744");
-    rock.addColorStop(1, "#593641");
+    rock.addColorStop(0, "#ffe17b");
+    rock.addColorStop(0.25, "#ff8745");
+    rock.addColorStop(0.68, "#d63c4e");
+    rock.addColorStop(1, "#521d4d");
     ctx.fillStyle = rock;
     ctx.beginPath();
     ctx.moveTo(3, 10);
@@ -1498,14 +1506,18 @@ window.SpaceArt = {
     ctx.closePath();
     ctx.fill();
     ctx.restore();
-    ctx.strokeStyle = "rgba(255, 210, 157, 0.78)";
-    ctx.lineWidth = 2;
+    ctx.save();
+    ctx.shadowColor = "rgba(255, 195, 76, 0.9)";
+    ctx.shadowBlur = 9;
+    ctx.strokeStyle = "rgba(255, 229, 132, 0.96)";
+    ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(14, 10);
     ctx.quadraticCurveTo(70, 5, 120, 10);
     ctx.quadraticCurveTo(192, 4, 266, 10);
     ctx.stroke();
-    ctx.fillStyle = "#723c40";
+    ctx.restore();
+    ctx.fillStyle = "#641f4c";
     for (let x = 20; x < 280; x += 38) ctx.fillRect(x, 26 + (x % 3), 12, 4);
   },
 
@@ -1753,12 +1765,12 @@ window.SpaceArt = {
 
   drawDeepSky(ctx, width = 1280, height = 720) {
     const sky = ctx.createLinearGradient(0, 0, 0, height);
-    sky.addColorStop(0, "#080d25");
-    sky.addColorStop(0.58, "#111735");
-    sky.addColorStop(1, "#17182e");
+    sky.addColorStop(0, "#05091f");
+    sky.addColorStop(0.58, "#11194a");
+    sky.addColorStop(1, "#25143f");
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, width, height);
-    [[250, 230, 245, "#53338a"], [920, 180, 310, "#1c7291"], [670, 440, 290, "#742f75"]]
+    [[250, 230, 245, "#873cff"], [920, 180, 310, "#00c9e8"], [670, 440, 290, "#e13cae"]]
       .forEach(([x, y, radius, color]) => {
         const cloud = ctx.createRadialGradient(x, y, 4, x, y, radius);
         cloud.addColorStop(0, `${color}66`);
@@ -1772,7 +1784,7 @@ window.SpaceArt = {
       const y = (index * 113 + 27) % height;
       const radius = index % 19 === 0 ? 2 : index % 4 === 0 ? 1.3 : 0.7;
       ctx.globalAlpha = 0.42 + (index % 5) * 0.11;
-      ctx.fillStyle = index % 6 === 0 ? "#baf4ff" : "#f2e7ff";
+      ctx.fillStyle = index % 7 === 0 ? "#ffd66e" : index % 6 === 0 ? "#8ff8ff" : "#f7eaff";
       ctx.beginPath();
       ctx.arc(x, y, radius, 0, Math.PI * 2);
       ctx.fill();
@@ -1809,9 +1821,9 @@ window.SpaceArt = {
       const y = 365 + ((index * 71) % 260);
       const radius = 3 + (index % 7) * 1.6;
       const rock = ctx.createRadialGradient(x - radius * 0.35, y - radius * 0.42, 1, x, y, radius * 1.6);
-      rock.addColorStop(0, "#b2a9ae");
-      rock.addColorStop(0.4, "#6e7189");
-      rock.addColorStop(1, "rgba(38, 42, 68, 0.2)");
+      rock.addColorStop(0, "#e2d6c3");
+      rock.addColorStop(0.4, "#7570a8");
+      rock.addColorStop(1, "rgba(23, 24, 66, 0.2)");
       ctx.fillStyle = rock;
       ctx.beginPath();
       ctx.ellipse(x, y, radius * 1.5, radius, (index % 5) * 0.18, 0, Math.PI * 2);
@@ -1883,29 +1895,33 @@ window.SpaceArt = {
     ctx.shadowColor = "rgba(4, 8, 24, 0.72)";
     ctx.shadowBlur = 13;
     const face = ctx.createLinearGradient(0, 4, 0, 38);
-    face.addColorStop(0, "#8392c6");
-    face.addColorStop(0.22, "#434e7b");
-    face.addColorStop(0.72, "#242c50");
-    face.addColorStop(1, "#11182e");
+    face.addColorStop(0, "#b7fbff");
+    face.addColorStop(0.22, "#6279ed");
+    face.addColorStop(0.72, "#372e85");
+    face.addColorStop(1, "#171638");
     ctx.fillStyle = face;
     ctx.beginPath();
     ctx.roundRect(2, 5, 276, 34, 11);
     ctx.fill();
     ctx.restore();
-    ctx.strokeStyle = "rgba(173, 232, 247, 0.82)";
-    ctx.lineWidth = 2;
+    ctx.save();
+    ctx.shadowColor = "rgba(56, 240, 255, 0.88)";
+    ctx.shadowBlur = 10;
+    ctx.strokeStyle = "rgba(148, 250, 255, 0.98)";
+    ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(14, 9);
     ctx.quadraticCurveTo(134, 2, 266, 9);
     ctx.stroke();
-    ctx.fillStyle = "#c8d8e8";
+    ctx.restore();
+    ctx.fillStyle = "#ffd66e";
     for (let x = 18; x < 272; x += 34) {
       ctx.beginPath();
       ctx.arc(x, 19 + (x % 3), 2.5, 0, Math.PI * 2);
       ctx.fill();
     }
-    ctx.strokeStyle = "rgba(115, 218, 228, 0.32)";
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(255, 113, 226, 0.72)";
+    ctx.lineWidth = 2;
     for (let x = 28; x < 268; x += 48) {
       ctx.beginPath();
       ctx.moveTo(x, 30);

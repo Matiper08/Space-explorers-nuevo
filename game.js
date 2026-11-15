@@ -154,11 +154,11 @@
       const menuBackground = selectedWorldId === "mars" ? art.marsMenuBackground
         : selectedWorldId === "deep" ? art.deepMenuBackground : art.menuBackground;
       this.add.image(0, 0, menuBackground).setOrigin(0);
-      this.add.rectangle(640, 360, 1280, 720, 0x091020, 0.34);
+      this.add.rectangle(640, 360, 1280, 720, 0x091020, 0.26);
       this.add.image(640, 162, art.signal).setDisplaySize(64, 64);
 
       this.add.text(640, 232, data.text.eyebrow, {
-        color: "#e7c89b",
+        color: "#82f2ff",
         fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "20px",
         fontStyle: "bold",
@@ -181,10 +181,10 @@
         fontSize: "22px"
       }).setOrigin(0.5);
 
-      const languageButton = this.add.rectangle(1110, 42, 300, 46, 0x18223c, 0.96)
-        .setStrokeStyle(2, 0x8fa9c8, 0.9)
+      const languageButton = this.add.rectangle(1150, 42, 200, 42, 0x10213e, 0.34)
+        .setStrokeStyle(2, 0x72e9ff, 0.56)
         .setInteractive({ useHandCursor: true });
-      this.add.text(1110, 42, data.text.languageButton, {
+      this.add.text(1150, 42, data.text.languageButton, {
         color: "#fff1ce",
         fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "18px",
@@ -192,10 +192,10 @@
       }).setOrigin(0.5);
       languageButton.on("pointerdown", () => this.toggleLanguage());
 
-      const creditsButton = this.add.rectangle(1110, 100, 260, 44, 0x18223c, 0.96)
-        .setStrokeStyle(2, 0x8fa9c8, 0.9)
+      const creditsButton = this.add.rectangle(1150, 94, 180, 40, 0x10213e, 0.34)
+        .setStrokeStyle(2, 0x72e9ff, 0.56)
         .setInteractive({ useHandCursor: true });
-      const creditsLabel = this.add.text(1110, 100, data.text.creditsButton, {
+      const creditsLabel = this.add.text(1150, 94, data.text.creditsButton, {
         color: "#fff1ce",
         fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "18px",
@@ -204,19 +204,19 @@
       creditsButton.on("pointerdown", () => this.openCredits());
       creditsLabel.setInteractive({ useHandCursor: true }).on("pointerdown", () => this.openCredits());
 
-      const button = this.add.rectangle(640, 428, 350, 60, 0xf0cd98, 1)
-        .setStrokeStyle(2, 0xffedcc, 0.9)
+      const button = this.add.rectangle(640, 428, 320, 56, 0x1b819b, 0.38)
+        .setStrokeStyle(2, 0x91f5ff, 0.82)
         .setInteractive({ useHandCursor: true });
       const buttonLabel = this.add.text(640, 428, data.text.start, {
-        color: "#22253a",
+        color: "#f5fcff",
         fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "22px",
         fontStyle: "bold",
         letterSpacing: 1
       }).setOrigin(0.5);
 
-      button.on("pointerover", () => button.setFillStyle(0xffdfb1));
-      button.on("pointerout", () => button.setFillStyle(0xf0cd98));
+      button.on("pointerover", () => button.setFillStyle(0x1b819b, 0.54));
+      button.on("pointerout", () => button.setFillStyle(0x1b819b, 0.38));
       button.on("pointerdown", () => this.beginExpedition());
       buttonLabel.setInteractive({ useHandCursor: true }).on("pointerdown", () => this.beginExpedition());
 
@@ -226,11 +226,11 @@
         fontSize: "18px"
       }).setOrigin(0.5);
 
-      const worldButton = this.add.rectangle(640, 520, 430, 46, 0x6a3b3d, 0.98)
-        .setStrokeStyle(2, 0xf2bd84, 0.92)
+      const worldButton = this.add.rectangle(640, 520, 400, 44, 0x44234f, 0.36)
+        .setStrokeStyle(2, 0xd780ff, 0.66)
         .setInteractive({ useHandCursor: true });
       this.worldButtonLabel = this.add.text(640, 520, "", {
-        color: "#fff1d2",
+        color: "#f3e4ff",
         fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "18px",
         fontStyle: "bold",
@@ -240,19 +240,19 @@
       this.worldButtonLabel.setInteractive({ useHandCursor: true }).on("pointerdown", () => this.openSystemMap());
       this.updateWorldButton();
 
-      const journalButton = this.add.rectangle(640, 580, 500, 56, 0x243450, 0.98)
-        .setStrokeStyle(2, 0xb9d8e4, 0.9)
+      const journalButton = this.add.rectangle(640, 580, 460, 50, 0x153d59, 0.36)
+        .setStrokeStyle(2, 0x6fe7ff, 0.64)
         .setInteractive({ useHandCursor: true });
       const journalLabel = this.add.text(640, 580, data.text.journalButton, {
-        color: "#f6f1e7",
+        color: "#e9fbff",
         fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "18px",
         fontStyle: "bold",
         align: "center",
         wordWrap: { width: 460 }
       }).setOrigin(0.5);
-      journalButton.on("pointerover", () => journalButton.setFillStyle(0x304462));
-      journalButton.on("pointerout", () => journalButton.setFillStyle(0x243450));
+      journalButton.on("pointerover", () => journalButton.setFillStyle(0x17617a, 0.52));
+      journalButton.on("pointerout", () => journalButton.setFillStyle(0x153d59, 0.36));
       journalButton.on("pointerdown", () => this.openJournal());
       journalLabel.setInteractive({ useHandCursor: true }).on("pointerdown", () => this.openJournal());
 
@@ -315,7 +315,7 @@
 
     create() {
       this.add.image(0, 0, art.deepMenuBackground).setOrigin(0);
-      this.add.rectangle(640, 360, 1280, 720, 0x091020, 0.62);
+      this.add.rectangle(640, 360, 1280, 720, 0x091020, 0.36);
       this.add.text(640, 82, data.text.mapTitle, {
         color: "#fff8ec", fontFamily: "Georgia, Times New Roman, serif",
         fontSize: "38px", fontStyle: "bold", align: "center",
@@ -341,9 +341,9 @@
       this.add.circle(191, 353, 11, 0xfff6d8, 0.82).setDepth(3);
 
       const worlds = [
-        { id: "moon", x: 470, y: 330, color: 0xa8b5c8, description: data.text.mapMoonDescription },
-        { id: "mars", x: 735, y: 430, color: 0xd87955, description: data.text.mapMarsDescription },
-        { id: "deep", x: 1040, y: 305, color: 0x8b83ce, description: data.text.mapDeepDescription }
+        { id: "moon", x: 470, y: 330, color: 0x55caff, description: data.text.mapMoonDescription },
+        { id: "mars", x: 735, y: 430, color: 0xff654b, description: data.text.mapMarsDescription },
+        { id: "deep", x: 1040, y: 305, color: 0xc46bff, description: data.text.mapDeepDescription }
       ];
       this.worldNodes = worlds.map((world, index) => {
         const halo = this.add.circle(world.x, world.y, 74, world.color, 0.12).setDepth(2);
@@ -380,8 +380,8 @@
         color: "#e5e9f2", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "18px", align: "center", wordWrap: { width: 1100 }
       }).setOrigin(0.5);
-      const backButton = this.add.rectangle(640, 654, 340, 50, 0x243450, 0.98)
-        .setStrokeStyle(2, 0xb9d8e4, 0.9)
+      const backButton = this.add.rectangle(640, 654, 320, 46, 0x153d59, 0.36)
+        .setStrokeStyle(2, 0x6fe7ff, 0.62)
         .setInteractive({ useHandCursor: true });
       const backLabel = this.add.text(640, 654, data.text.mapBack, {
         color: "#f6f1e7", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
@@ -390,10 +390,10 @@
       backButton.on("pointerdown", () => this.scene.start("MenuScene"));
       backLabel.setInteractive({ useHandCursor: true }).on("pointerdown", () => this.scene.start("MenuScene"));
 
-      this.languageButton = this.add.rectangle(1110, 42, 280, 44, 0x18223c, 0.98)
-        .setStrokeStyle(2, 0x8fa9c8, 0.9)
+      this.languageButton = this.add.rectangle(1150, 42, 200, 40, 0x10213e, 0.34)
+        .setStrokeStyle(2, 0x72e9ff, 0.54)
         .setInteractive({ useHandCursor: true });
-      this.add.text(1110, 42, data.text.languageButton, {
+      this.add.text(1150, 42, data.text.languageButton, {
         color: "#fff1ce", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "18px", fontStyle: "bold"
       }).setOrigin(0.5);
@@ -445,7 +445,7 @@
 
     create() {
       this.add.image(0, 0, art.deepMenuBackground).setOrigin(0);
-      this.add.rectangle(640, 360, 1280, 720, 0x091020, 0.76);
+      this.add.rectangle(640, 360, 1280, 720, 0x091020, 0.36);
       this.add.text(640, 48, data.text.creditsTitle, {
         color: "#fff8ec", fontFamily: "Georgia, Times New Roman, serif",
         fontSize: "32px", fontStyle: "bold", align: "center",
@@ -464,8 +464,8 @@
       const centers = [220, 640, 1060];
       columns.forEach((column, columnIndex) => {
         const centerX = centers[columnIndex];
-        this.add.rectangle(centerX, 380, 390, 470, 0x111a30, 0.94)
-          .setStrokeStyle(2, 0x8298b1, 0.72);
+        this.add.rectangle(centerX, 380, 390, 470, 0x111a30, 0.38)
+          .setStrokeStyle(2, 0x8298b1, 0.82);
         this.add.text(centerX, 157, column.title, {
           color: "#f0cd98", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
           fontSize: "20px", fontStyle: "bold", align: "center",
@@ -493,8 +493,8 @@
         fontSize: "18px", fontStyle: "bold", align: "center",
         wordWrap: { width: 1100 }
       }).setOrigin(0.5);
-      const backButton = this.add.rectangle(640, 682, 340, 46, 0x243450, 0.98)
-        .setStrokeStyle(2, 0xb9d8e4, 0.9)
+      const backButton = this.add.rectangle(640, 682, 320, 42, 0x153d59, 0.36)
+        .setStrokeStyle(2, 0x6fe7ff, 0.62)
         .setInteractive({ useHandCursor: true });
       const backLabel = this.add.text(640, 682, data.text.creditsBack, {
         color: "#f6f1e7", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
@@ -503,10 +503,10 @@
       backButton.on("pointerdown", () => this.scene.start("MenuScene"));
       backLabel.setInteractive({ useHandCursor: true }).on("pointerdown", () => this.scene.start("MenuScene"));
 
-      this.languageButton = this.add.rectangle(1110, 42, 280, 44, 0x18223c, 0.98)
-        .setStrokeStyle(2, 0x8fa9c8, 0.9)
+      this.languageButton = this.add.rectangle(1150, 42, 200, 40, 0x10213e, 0.34)
+        .setStrokeStyle(2, 0x72e9ff, 0.54)
         .setInteractive({ useHandCursor: true });
-      this.add.text(1110, 42, data.text.languageButton, {
+      this.add.text(1150, 42, data.text.languageButton, {
         color: "#fff1ce", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "18px", fontStyle: "bold"
       }).setOrigin(0.5);
@@ -542,11 +542,11 @@
     }
 
     create() {
-      this.add.rectangle(640, 360, 1280, 720, 0x080c18, 0.82);
-      this.add.rectangle(640, 360, 650, 505, 0x111a30, 0.99)
-        .setStrokeStyle(3, 0xe7c89b, 0.96);
-      this.add.rectangle(640, 360, 624, 479, 0x192641, 0.98)
-        .setStrokeStyle(1, 0x8298b1, 0.75);
+      this.add.rectangle(640, 360, 1280, 720, 0x080c18, 0.3);
+      this.add.rectangle(640, 360, 590, 490, 0x111a30, 0.38)
+        .setStrokeStyle(3, 0xe7c89b, 0.9);
+      this.add.rectangle(640, 360, 566, 466, 0x192641, 0.36)
+        .setStrokeStyle(1, 0x8298b1, 0.72);
       this.add.text(640, 205, data.text.pauseTitle, {
         color: "#fff8ec", fontFamily: "Georgia, Times New Roman, serif",
         fontSize: "34px", fontStyle: "bold", align: "center",
@@ -559,10 +559,10 @@
       this.addPauseButton(data.text.pauseRestart, 400, () => this.restartExpedition());
       this.addPauseButton(data.text.pauseMenu, 475, () => this.returnToMenu());
 
-      this.languageButton = this.add.rectangle(1110, 42, 280, 44, 0x18223c, 0.98)
-        .setStrokeStyle(2, 0x8fa9c8, 0.9)
+      this.languageButton = this.add.rectangle(1150, 42, 200, 40, 0x10213e, 0.34)
+        .setStrokeStyle(2, 0x72e9ff, 0.54)
         .setInteractive({ useHandCursor: true });
-      this.add.text(1110, 42, data.text.languageButton, {
+      this.add.text(1150, 42, data.text.languageButton, {
         color: "#fff1ce", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "18px", fontStyle: "bold"
       }).setOrigin(0.5);
@@ -577,16 +577,16 @@
     }
 
     addPauseButton(label, y, callback) {
-      const button = this.add.rectangle(640, y, 390, 54, 0x304462, 0.98)
-        .setStrokeStyle(2, 0xb9d8e4, 0.92)
+      const button = this.add.rectangle(640, y, 360, 50, 0x153d59, 0.36)
+        .setStrokeStyle(2, 0x6fe7ff, 0.7)
         .setInteractive({ useHandCursor: true });
       const buttonLabel = this.add.text(640, y, label, {
         color: "#f6f1e7", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "18px", fontStyle: "bold", align: "center",
         wordWrap: { width: 350 }
       }).setOrigin(0.5);
-      button.on("pointerover", () => button.setFillStyle(0x405a7c));
-      button.on("pointerout", () => button.setFillStyle(0x304462));
+      button.on("pointerover", () => button.setFillStyle(0x17617a, 0.52));
+      button.on("pointerout", () => button.setFillStyle(0x153d59, 0.36));
       button.on("pointerdown", callback);
       buttonLabel.setInteractive({ useHandCursor: true }).on("pointerdown", callback);
     }
@@ -637,8 +637,8 @@
       const journalBackground = selectedWorldId === "mars" ? art.marsMenuBackground
         : selectedWorldId === "deep" ? art.deepMenuBackground : art.menuBackground;
       this.add.image(0, 0, journalBackground).setOrigin(0);
-      this.add.rectangle(640, 360, 1280, 720, 0x091020, 0.72);
-      this.add.rectangle(640, 360, 1160, 620, 0x111a30, 0.97)
+      this.add.rectangle(640, 360, 1280, 720, 0x091020, 0.36);
+      this.add.rectangle(640, 360, 1160, 620, 0x111a30, 0.38)
         .setStrokeStyle(3, 0xe7c89b, 0.95);
       this.add.text(640, 80, data.text.journalTitle, {
         color: "#fff8ec", fontFamily: "Georgia, Times New Roman, serif",
@@ -646,10 +646,10 @@
         wordWrap: { width: 980 }
       }).setOrigin(0.5);
 
-      this.languageButton = this.add.rectangle(1110, 42, 280, 44, 0x18223c, 0.98)
-        .setStrokeStyle(2, 0x8fa9c8, 0.9)
+      this.languageButton = this.add.rectangle(1150, 42, 200, 40, 0x10213e, 0.34)
+        .setStrokeStyle(2, 0x72e9ff, 0.54)
         .setInteractive({ useHandCursor: true });
-      this.languageButtonLabel = this.add.text(1110, 42, data.text.languageButton, {
+      this.languageButtonLabel = this.add.text(1150, 42, data.text.languageButton, {
         color: "#fff1ce", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "18px", fontStyle: "bold"
       }).setOrigin(0.5);
@@ -661,8 +661,8 @@
       }).setOrigin(0.5);
       this.renderEntry();
 
-      const returnButton = this.add.rectangle(640, 658, 310, 48, 0x243450, 0.98)
-        .setStrokeStyle(2, 0xb9d8e4, 0.9)
+      const returnButton = this.add.rectangle(640, 658, 290, 44, 0x153d59, 0.36)
+        .setStrokeStyle(2, 0x6fe7ff, 0.62)
         .setInteractive({ useHandCursor: true });
       this.add.text(640, 658, data.text.journalReturn, {
         color: "#f6f1e7", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
@@ -756,8 +756,8 @@
     }
 
     addJournalNavigation(direction, label, x) {
-      const button = this.add.rectangle(x, 658, 190, 48, 0x243450, 0.98)
-        .setStrokeStyle(2, 0xb9d8e4, 0.9)
+      const button = this.add.rectangle(x, 658, 180, 44, 0x153d59, 0.36)
+        .setStrokeStyle(2, 0x6fe7ff, 0.62)
         .setInteractive({ useHandCursor: true });
       const buttonText = this.add.text(x, 658, label, {
         color: "#f6f1e7", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
@@ -2095,41 +2095,49 @@
         stroke: "#10172a",
         strokeThickness: 4
       };
-      this.add.rectangle(420, 91, 790, 150, 0x10182c, 0.78)
-        .setStrokeStyle(2, 0x93a7c3, 0.42)
+      const worldAccent = this.worldId === "mars" ? 0xff8a50
+        : this.worldId === "deep" ? 0xe279ff : 0x64e6ff;
+      this.add.rectangle(420, 88, 790, 136, 0x09152e, 0.34)
+        .setStrokeStyle(2, worldAccent, 0.5)
         .setScrollFactor(0)
         .setDepth(8);
       this.expeditionLabelText = this.add.text(28, 20,
         this.worldId === "mars" ? data.text.marsExpeditionLabel
           : this.worldId === "deep" ? data.text.deepSpaceExpeditionLabel
             : data.text.expeditionLabel, {
-        ...fixedText, color: "#f0cd98", fontSize: "18px", letterSpacing: 2
+        ...fixedText, color: this.worldId === "mars" ? "#ff9b55"
+          : this.worldId === "deep" ? "#e68cff" : "#7bedff",
+        fontSize: "18px", letterSpacing: 2
       }).setScrollFactor(0).setDepth(10);
       this.worldTitleText = this.add.text(28, 49, lunar.title, {
-        ...fixedText, fontFamily: "Georgia, Times New Roman, serif", fontSize: "26px",
+        ...fixedText, fontFamily: "Georgia, Times New Roman, serif", fontSize: "23px",
         wordWrap: { width: 770 }
       }).setScrollFactor(0).setDepth(10);
-      this.statusText = this.add.text(28, 89, lunar.hint, {
+      this.statusText = this.add.text(28, 81, lunar.hint, {
         ...fixedText, color: "#d8ddeb", fontSize: "18px", fontStyle: "normal",
         wordWrap: { width: 770 }
       }).setScrollFactor(0).setDepth(10);
-      this.statsText = this.add.text(28, 132, "", {
-        ...fixedText, color: "#f7e4ba", fontSize: "18px"
+      this.statsText = this.add.text(28, 119, "", {
+        ...fixedText, color: this.worldId === "mars" ? "#ffb06d"
+          : this.worldId === "deep" ? "#f09bff" : "#91f5ff",
+        fontSize: "18px"
       }).setScrollFactor(0).setDepth(10);
       this.helpText = this.add.text(640, 680, data.text.touchControlsHint, {
         ...fixedText, align: "center", fontSize: "18px", color: "#f1f0eb",
         wordWrap: { width: 1160 }
-      }).setOrigin(0.5).setScrollFactor(0).setDepth(10);
-      this.languageButton = this.add.rectangle(1110, 34, 300, 44, 0x18223c, 0.96)
-        .setStrokeStyle(2, 0x8fa9c8, 0.9)
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(10).setAlpha(0.84);
+      this.languageButton = this.add.rectangle(1150, 34, 200, 40, 0x10213e, 0.34)
+        .setStrokeStyle(2, 0x72e9ff, 0.54)
         .setScrollFactor(0)
         .setDepth(12)
         .setInteractive({ useHandCursor: true });
-      this.languageButtonLabel = this.add.text(1110, 34, data.text.languageButton, {
+      this.languageButtonLabel = this.add.text(1150, 34, data.text.languageButton, {
         color: "#fff1ce", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "18px", fontStyle: "bold"
       }).setOrigin(0.5).setScrollFactor(0).setDepth(12);
       this.languageButton.on("pointerdown", () => this.toggleLanguage());
+      this.languageButton.on("pointerover", () => this.languageButton.setFillStyle(0x17496c, 0.52));
+      this.languageButton.on("pointerout", () => this.languageButton.setFillStyle(0x10213e, 0.34));
       this.createTouchControls();
       this.rhythmPanel = this.add.container(0, 0).setScrollFactor(0).setDepth(12).setVisible(false);
       this.rhythmPanel.add(this.add.rectangle(640, 465, 580, 112, 0x111a31, 0.94)
@@ -2179,31 +2187,40 @@
       this.touchControlsLayer = this.add.container(0, 0).setScrollFactor(0).setDepth(14);
       this.touchControlLabels = {};
       this.touchButtons = {};
-      this.addTouchButton("left", 82, 615, data.text.touchLeft);
-      this.addTouchButton("right", 198, 615, data.text.touchRight);
-      this.addTouchButton("jump", 1058, 615, data.text.touchJump);
-      this.addTouchButton("interact", 1190, 615, data.text.touchAction);
+      this.addTouchButton("left", 72, 622, data.text.touchLeft);
+      this.addTouchButton("right", 182, 622, data.text.touchRight);
+      this.addTouchButton("jump", 1090, 622, data.text.touchJump);
+      this.addTouchButton("interact", 1202, 622, data.text.touchAction);
     }
 
     addTouchButton(action, x, y, label) {
-      const button = this.add.rectangle(x, y, 108, 68, 0x18223c, 0.82)
-        .setStrokeStyle(2, 0xb9d8e4, 0.9)
+      const button = this.add.rectangle(x, y, 100, 56, 0x12304d, 0.32)
+        .setStrokeStyle(2, 0x7ceeff, 0.44)
         .setInteractive({ useHandCursor: true });
       const buttonLabel = this.add.text(x, y, label, {
         color: "#fff8ec", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "18px", fontStyle: "bold", align: "center",
-        wordWrap: { width: 98 }
-      }).setOrigin(0.5);
+        wordWrap: { width: 94 }, stroke: "#08142b", strokeThickness: 3
+      }).setOrigin(0.5).setAlpha(0.82);
       this.touchControlsLayer.add([button, buttonLabel]);
       this.touchButtons[action] = [button, buttonLabel];
+      const setPressed = (pressed) => {
+        button.setFillStyle(pressed ? 0x176f91 : 0x12304d, pressed ? 0.5 : 0.32);
+        button.setStrokeStyle(2, pressed ? 0x9af8ff : 0x7ceeff, pressed ? 0.78 : 0.44);
+        buttonLabel.setAlpha(pressed ? 1 : 0.82);
+      };
       button.on("pointerdown", (pointer) => {
         this.touchInputState[action].add(pointer.id);
         if (action === "jump") this.touchJumpPressed = true;
         if (action === "interact") this.touchInteractPressed = true;
+        setPressed(true);
       });
-      button.on("pointerupoutside", (pointer) => this.releaseTouchPointer(pointer.id));
-      button.on("pointerover", () => button.setFillStyle(0x304462, 0.96));
-      button.on("pointerout", () => button.setFillStyle(0x18223c, 0.82));
+      const release = (pointer) => {
+        this.releaseTouchPointer(pointer.id);
+        setPressed(this.touchInputState[action].size > 0);
+      };
+      button.on("pointerup", release);
+      button.on("pointerupoutside", release);
       this.touchControlLabels[action] = buttonLabel;
     }
 
