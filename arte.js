@@ -1,3 +1,4 @@
+// Created with AI assistance (Claude, GitHub Copilot)
 // Texturas Canvas 2D del prototipo; cada clave puede sustituirse por un recurso de assets/.
 window.SpaceArt = {
   keys: {

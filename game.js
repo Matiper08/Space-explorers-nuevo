@@ -1,3 +1,4 @@
+// Created with AI assistance (Claude, GitHub Copilot)
 // Escenas base: inicio, carga, menu y escenario de expedicion.
 (function startSpaceExplorers() {
   const data = window.SpaceData;
@@ -139,6 +140,7 @@
         duration: 900,
         repeat: -1
       });
+      this.input.keyboard.once("keydown-ESC", () => this.scene.start("MenuScene"));
       this.time.delayedCall(350, () => this.scene.start("MenuScene"));
     }
   }
@@ -189,6 +191,18 @@
         fontStyle: "bold"
       }).setOrigin(0.5);
       languageButton.on("pointerdown", () => this.toggleLanguage());
+
+      const creditsButton = this.add.rectangle(1110, 100, 260, 44, 0x18223c, 0.96)
+        .setStrokeStyle(2, 0x8fa9c8, 0.9)
+        .setInteractive({ useHandCursor: true });
+      const creditsLabel = this.add.text(1110, 100, data.text.creditsButton, {
+        color: "#fff1ce",
+        fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px",
+        fontStyle: "bold"
+      }).setOrigin(0.5);
+      creditsButton.on("pointerdown", () => this.openCredits());
+      creditsLabel.setInteractive({ useHandCursor: true }).on("pointerdown", () => this.openCredits());
 
       const button = this.add.rectangle(640, 428, 350, 60, 0xf0cd98, 1)
         .setStrokeStyle(2, 0xffedcc, 0.9)
@@ -256,11 +270,13 @@
 
       this.input.keyboard.once("keydown-ENTER", () => this.beginExpedition());
       this.input.keyboard.once("keydown-SPACE", () => this.beginExpedition());
+      this.creditsKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.C);
       this.languageKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.L);
     }
 
     update() {
       if (Phaser.Input.Keyboard.JustDown(this.languageKey)) this.toggleLanguage();
+      if (Phaser.Input.Keyboard.JustDown(this.creditsKey)) this.openCredits();
     }
 
     beginExpedition() {
@@ -273,6 +289,10 @@
 
     openSystemMap() {
       this.scene.start("SystemMapScene");
+    }
+
+    openCredits() {
+      this.scene.start("CreditsScene");
     }
 
     toggleLanguage() {
@@ -418,6 +438,100 @@
     }
   }
 
+  class CreditsScene extends Phaser.Scene {
+    constructor() {
+      super("CreditsScene");
+    }
+
+    create() {
+      this.add.image(0, 0, art.deepMenuBackground).setOrigin(0);
+      this.add.rectangle(640, 360, 1280, 720, 0x091020, 0.76);
+      this.add.text(640, 48, data.text.creditsTitle, {
+        color: "#fff8ec", fontFamily: "Georgia, Times New Roman, serif",
+        fontSize: "32px", fontStyle: "bold", align: "center",
+        wordWrap: { width: 940 }
+      }).setOrigin(0.5);
+      this.add.text(640, 90, data.text.creditsInstructions, {
+        color: "#e5e9f2", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", align: "center", wordWrap: { width: 900 }
+      }).setOrigin(0.5);
+
+      const columns = [
+        { title: data.text.worldMoon, stations: data.lunarWorld.stations },
+        { title: data.text.worldMars, stations: data.marsWorld.stations },
+        { title: data.text.worldDeep, stations: data.deepSpaceWorld.stations }
+      ];
+      const centers = [220, 640, 1060];
+      columns.forEach((column, columnIndex) => {
+        const centerX = centers[columnIndex];
+        this.add.rectangle(centerX, 380, 390, 470, 0x111a30, 0.94)
+          .setStrokeStyle(2, 0x8298b1, 0.72);
+        this.add.text(centerX, 157, column.title, {
+          color: "#f0cd98", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+          fontSize: "20px", fontStyle: "bold", align: "center",
+          wordWrap: { width: 350 }
+        }).setOrigin(0.5);
+        column.stations.forEach((station, stationIndex) => {
+          const x = centerX - 174;
+          const y = 184 + stationIndex * 83;
+          this.add.text(x, y, station.title, {
+            color: "#fff8ec", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+            fontSize: "18px", fontStyle: "bold", wordWrap: { width: 348 }
+          });
+          const sourceLink = this.add.text(x, y + 44, data.text.creditsOpenSource, {
+            color: "#9fe5e1", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+            fontSize: "18px", fontStyle: "bold"
+          }).setInteractive({ useHandCursor: true });
+          sourceLink.on("pointerdown", () => window.open(station.card.source, "_blank", "noopener"));
+          sourceLink.on("pointerover", () => sourceLink.setColor("#fff1ce"));
+          sourceLink.on("pointerout", () => sourceLink.setColor("#9fe5e1"));
+        });
+      });
+
+      this.add.text(640, 626, data.text.creditsAI, {
+        color: "#fff1ce", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", fontStyle: "bold", align: "center",
+        wordWrap: { width: 1100 }
+      }).setOrigin(0.5);
+      const backButton = this.add.rectangle(640, 682, 340, 46, 0x243450, 0.98)
+        .setStrokeStyle(2, 0xb9d8e4, 0.9)
+        .setInteractive({ useHandCursor: true });
+      const backLabel = this.add.text(640, 682, data.text.creditsBack, {
+        color: "#f6f1e7", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", fontStyle: "bold", align: "center"
+      }).setOrigin(0.5);
+      backButton.on("pointerdown", () => this.scene.start("MenuScene"));
+      backLabel.setInteractive({ useHandCursor: true }).on("pointerdown", () => this.scene.start("MenuScene"));
+
+      this.languageButton = this.add.rectangle(1110, 42, 280, 44, 0x18223c, 0.98)
+        .setStrokeStyle(2, 0x8fa9c8, 0.9)
+        .setInteractive({ useHandCursor: true });
+      this.add.text(1110, 42, data.text.languageButton, {
+        color: "#fff1ce", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
+        fontSize: "18px", fontStyle: "bold"
+      }).setOrigin(0.5);
+      this.languageButton.on("pointerdown", () => this.toggleLanguage());
+      this.creditsKeys = this.input.keyboard.addKeys({
+        escape: Phaser.Input.Keyboard.KeyCodes.ESC,
+        enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
+        language: Phaser.Input.Keyboard.KeyCodes.L
+      });
+    }
+
+    update() {
+      if (Phaser.Input.Keyboard.JustDown(this.creditsKeys.escape)
+        || Phaser.Input.Keyboard.JustDown(this.creditsKeys.enter)) {
+        this.scene.start("MenuScene");
+      }
+      if (Phaser.Input.Keyboard.JustDown(this.creditsKeys.language)) this.toggleLanguage();
+    }
+
+    toggleLanguage() {
+      applyLanguage(data.language === "en" ? "es" : "en");
+      this.scene.restart();
+    }
+  }
+
   class PauseScene extends Phaser.Scene {
     constructor() {
       super("PauseScene");
@@ -442,9 +556,8 @@
         color: "#d8ddeb", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
         fontSize: "18px", align: "center", wordWrap: { width: 560 }
       }).setOrigin(0.5);
-      this.addPauseButton(data.text.pauseResume, 330, () => this.resumeExpedition());
-      this.addPauseButton(data.text.pauseRestart, 405, () => this.restartExpedition());
-      this.addPauseButton(data.text.pauseMenu, 480, () => this.returnToMenu());
+      this.addPauseButton(data.text.pauseRestart, 400, () => this.restartExpedition());
+      this.addPauseButton(data.text.pauseMenu, 475, () => this.returnToMenu());
 
       this.languageButton = this.add.rectangle(1110, 42, 280, 44, 0x18223c, 0.98)
         .setStrokeStyle(2, 0x8fa9c8, 0.9)
@@ -456,7 +569,7 @@
       this.languageButton.on("pointerdown", () => this.toggleLanguage());
       this.pauseKeys = this.input.keyboard.addKeys({
         escape: Phaser.Input.Keyboard.KeyCodes.ESC,
-        enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
+        pause: Phaser.Input.Keyboard.KeyCodes.P,
         restart: Phaser.Input.Keyboard.KeyCodes.R,
         menu: Phaser.Input.Keyboard.KeyCodes.M,
         language: Phaser.Input.Keyboard.KeyCodes.L
@@ -479,8 +592,8 @@
     }
 
     update() {
-      if (Phaser.Input.Keyboard.JustDown(this.pauseKeys.escape)
-        || Phaser.Input.Keyboard.JustDown(this.pauseKeys.enter)) this.resumeExpedition();
+      if (Phaser.Input.Keyboard.JustDown(this.pauseKeys.escape)) this.returnToMenu();
+      if (Phaser.Input.Keyboard.JustDown(this.pauseKeys.pause)) this.resumeExpedition();
       if (Phaser.Input.Keyboard.JustDown(this.pauseKeys.restart)) this.restartExpedition();
       if (Phaser.Input.Keyboard.JustDown(this.pauseKeys.menu)) this.returnToMenu();
       if (Phaser.Input.Keyboard.JustDown(this.pauseKeys.language)) this.toggleLanguage();
@@ -761,7 +874,8 @@
         space: Phaser.Input.Keyboard.KeyCodes.SPACE,
         interact: Phaser.Input.Keyboard.KeyCodes.E,
         enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
-        pause: Phaser.Input.Keyboard.KeyCodes.ESC,
+        escape: Phaser.Input.Keyboard.KeyCodes.ESC,
+        pause: Phaser.Input.Keyboard.KeyCodes.P,
         language: Phaser.Input.Keyboard.KeyCodes.L
       });
       this.jumpKeys = [this.keys.up, this.keys.w, this.keys.space];
@@ -2006,16 +2120,6 @@
         ...fixedText, align: "center", fontSize: "18px", color: "#f1f0eb",
         wordWrap: { width: 1160 }
       }).setOrigin(0.5).setScrollFactor(0).setDepth(10);
-      this.pauseButton = this.add.rectangle(884, 34, 145, 44, 0x18223c, 0.96)
-        .setStrokeStyle(2, 0x8fa9c8, 0.9)
-        .setScrollFactor(0)
-        .setDepth(12)
-        .setInteractive({ useHandCursor: true });
-      this.pauseButtonLabel = this.add.text(884, 34, data.text.pauseButton, {
-        color: "#fff1ce", fontFamily: "Trebuchet MS, Segoe UI, sans-serif",
-        fontSize: "18px", fontStyle: "bold"
-      }).setOrigin(0.5).setScrollFactor(0).setDepth(12);
-      this.pauseButton.on("pointerdown", () => this.pauseExpedition());
       this.languageButton = this.add.rectangle(1110, 34, 300, 44, 0x18223c, 0.96)
         .setStrokeStyle(2, 0x8fa9c8, 0.9)
         .setScrollFactor(0)
@@ -2195,7 +2299,6 @@
       this.worldTitleText.setText(lunar.title);
       this.helpText.setText(data.text.touchControlsHint);
       this.languageButtonLabel.setText(data.text.languageButton);
-      this.pauseButtonLabel.setText(data.text.pauseButton);
       this.touchControlLabels.left.setText(data.text.touchLeft);
       this.touchControlLabels.right.setText(data.text.touchRight);
       this.touchControlLabels.jump.setText(data.text.touchJump);
@@ -2477,7 +2580,11 @@
           this.touchButtons[action].forEach((control) => control.setVisible(!overlayOpen && !this.completed));
         });
       }
-      if (!this.player || this.completed) return;
+      if (!this.player) return;
+      if (this.completed) {
+        if (Phaser.Input.Keyboard.JustDown(this.keys.escape)) this.scene.start("MenuScene");
+        return;
+      }
       const dt = Math.min(delta / 1000, 0.04);
       const body = this.player.body;
       const grounded = body.blocked.down || body.touching.down;
@@ -2492,9 +2599,14 @@
         || Phaser.Input.Keyboard.JustDown(this.keys.enter)
         || this.touchInteractPressed;
       this.touchInteractPressed = false;
+      const escapePressed = Phaser.Input.Keyboard.JustDown(this.keys.escape);
       const pausePressed = Phaser.Input.Keyboard.JustDown(this.keys.pause);
       const languagePressed = Phaser.Input.Keyboard.JustDown(this.keys.language);
 
+      if (escapePressed) {
+        this.scene.start("MenuScene");
+        return;
+      }
       if (pausePressed) {
         this.pauseExpedition();
         return;
@@ -2666,6 +2778,7 @@
     LoadingScene,
     MenuScene,
     SystemMapScene,
+    CreditsScene,
     JournalScene,
     PauseScene,
     ExpeditionScene

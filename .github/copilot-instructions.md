@@ -1,3 +1,4 @@
+<!-- Created with AI assistance (Claude, GitHub Copilot) -->
 # SPACE EXPLORERS — INSTRUCCIONES DEL PROYECTO
 Leé este archivo completo antes de cada tarea. No hay espacio para la ambigüedad: si algo no está definido acá, elegí lo más simple y avisame en una línea. Respondé en español, en 5 líneas máximo por tarea.
 
@@ -67,7 +68,8 @@ Interfaz y entregables en inglés. Sin logos, banderas ni insignias de la NASA. 
 H1 Estructura y base técnica (pantalla 1280x720, escenas, carga).
 H2 Parkour completo con un escenario de prueba.
 H3 Motor de arte 2.5D, y Maia, Tuerca y los Grises con animaciones.
-H4 Mundo Luna completo (5 capas, 4 encuentros con retos y fichas).
+H4 Mundo Luna completo (5 capas, 4 encuentros con 
+retos y fichas).
 H5 Narrativa, diálogos, Diario, idioma EN/ES.
 H6 Mundo Marte (5 encuentros).
 H7 Mundo espacio profundo (5 encuentros y final Voyager).
