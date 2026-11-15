@@ -8,26 +8,32 @@
     .trim();
 
   const profiles = {
-    "elena": { color: "#f0cd98", interval: 34, pitch: 0.88, rate: 0.88 },
-    "maia": { color: "#9fe5ff", interval: 25, pitch: 1.12, rate: 1.02 },
-    "tuerca": { color: "#f4a8e8", interval: 20, pitch: 1.38, rate: 1.12 },
-    "eagle": { color: "#ffd27d", interval: 30, pitch: 0.96, rate: 0.94 },
-    "lunar rover": { color: "#91e8d2", interval: 22, pitch: 1.06, rate: 1.04 },
-    "rover lunar": { color: "#91e8d2", interval: 22, pitch: 1.06, rate: 1.04 },
-    "alsep": { color: "#c5b5ff", interval: 38, pitch: 0.78, rate: 0.84 },
-    "surveyor 3": { color: "#a9d8ff", interval: 34, pitch: 0.92, rate: 0.9 },
-    "pathfinder": { color: "#ffb38b", interval: 19, pitch: 1.26, rate: 1.12 },
-    "spirit & opportunity": { color: "#ffe097", interval: 27, pitch: 1.02, rate: 0.98 },
-    "spirit y opportunity": { color: "#ffe097", interval: 27, pitch: 1.02, rate: 0.98 },
-    "viking 1": { color: "#ffc28f", interval: 31, pitch: 0.84, rate: 0.9 },
-    "insight": { color: "#b7d8ff", interval: 40, pitch: 0.74, rate: 0.82 },
-    "ingenuity": { color: "#a8f0da", interval: 18, pitch: 1.34, rate: 1.16 },
-    "dawn": { color: "#b1e6ff", interval: 37, pitch: 0.82, rate: 0.86 },
-    "near shoemaker": { color: "#e5bdff", interval: 28, pitch: 1.16, rate: 1.02 },
-    "pioneer 10": { color: "#ffe4a8", interval: 33, pitch: 0.9, rate: 0.9 },
-    "kepler": { color: "#d0b6ff", interval: 36, pitch: 1.22, rate: 0.92 },
-    "voyager 1 & 2": { color: "#a9edff", interval: 42, pitch: 0.8, rate: 0.84 },
-    "voyager 1 y 2": { color: "#a9edff", interval: 42, pitch: 0.8, rate: 0.84 }
+    "elena": {
+      color: "#f0cd98", interval: 34, pitch: 0.96, rate: 0.92, voiceStyle: "feminine"
+    },
+    "maia": {
+      color: "#9fe5ff", interval: 25, pitch: 1.12, rate: 1, voiceStyle: "feminine"
+    },
+    "tuerca": {
+      color: "#f4a8e8", interval: 20, pitch: 1.04, rate: 0.98, voiceStyle: "robotic"
+    },
+    "eagle": { color: "#ffd27d", interval: 30, pitch: 0.98, rate: 0.98 },
+    "lunar rover": { color: "#91e8d2", interval: 22, pitch: 1.04, rate: 1 },
+    "rover lunar": { color: "#91e8d2", interval: 22, pitch: 1.04, rate: 1 },
+    "alsep": { color: "#c5b5ff", interval: 38, pitch: 0.94, rate: 0.96 },
+    "surveyor 3": { color: "#a9d8ff", interval: 34, pitch: 0.96, rate: 0.95 },
+    "pathfinder": { color: "#ffb38b", interval: 19, pitch: 1.08, rate: 1.06 },
+    "spirit & opportunity": { color: "#ffe097", interval: 27, pitch: 1, rate: 0.98 },
+    "spirit y opportunity": { color: "#ffe097", interval: 27, pitch: 1, rate: 0.98 },
+    "viking 1": { color: "#ffc28f", interval: 31, pitch: 0.94, rate: 0.96 },
+    "insight": { color: "#b7d8ff", interval: 40, pitch: 0.92, rate: 0.94 },
+    "ingenuity": { color: "#a8f0da", interval: 18, pitch: 1.1, rate: 1.06 },
+    "dawn": { color: "#b1e6ff", interval: 37, pitch: 0.94, rate: 0.96 },
+    "near shoemaker": { color: "#e5bdff", interval: 28, pitch: 1.06, rate: 0.99 },
+    "pioneer 10": { color: "#ffe4a8", interval: 33, pitch: 0.98, rate: 0.96 },
+    "kepler": { color: "#d0b6ff", interval: 36, pitch: 1.08, rate: 0.97 },
+    "voyager 1 & 2": { color: "#a9edff", interval: 42, pitch: 0.94, rate: 0.94 },
+    "voyager 1 y 2": { color: "#a9edff", interval: 42, pitch: 0.94, rate: 0.94 }
   };
   const interactionKeys = {
     moon: { lm: "lmClimb", lrv: "lrvDrive", alsep: "alsepListen", surveyor: "surveyorLand" },
@@ -51,6 +57,10 @@
     const profile = profiles[normalize(speaker)];
     if (!profile) throw new RangeError(`Unknown narrator voice: ${speaker}`);
     return profile;
+  };
+  const voiceNameHints = {
+    feminine: /sabina|zira|samantha|aria|jenny|hazel|susan|female|woman|mujer/i,
+    robotic: /raul|david|guy|male|man|hombre/i
   };
   let speechWarningShown = false;
 
@@ -95,12 +105,19 @@
       const utterance = new window.SpeechSynthesisUtterance(text);
       const profile = voiceFor(speaker);
       const languagePrefix = language === "es" ? "es" : "en";
-      const voices = window.speechSynthesis.getVoices()
-        .filter((voice) => voice.lang.toLowerCase().startsWith(languagePrefix));
+      const availableVoices = window.speechSynthesis.getVoices();
+      const voices = availableVoices.filter((voice) =>
+        voice.lang.toLowerCase().startsWith(languagePrefix)
+      );
+      const voiceHint = voiceNameHints[profile.voiceStyle];
+      const preferredVoice = voiceHint
+        && availableVoices.find((voice) => voiceHint.test(voice.name));
+      const naturalVoice = voices.find((voice) => /natural|neural|online/i.test(voice.name));
       utterance.lang = languagePrefix === "es" ? "es-ES" : "en-US";
-      if (voices.length) {
-        utterance.voice = voices[0];
-        utterance.lang = voices[0].lang;
+      const selectedVoice = preferredVoice || naturalVoice || voices[0];
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+        utterance.lang = selectedVoice.lang;
       }
       utterance.pitch = profile.pitch;
       utterance.rate = profile.rate;
