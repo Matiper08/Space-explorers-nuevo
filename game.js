@@ -1537,7 +1537,8 @@
         [2580, 455, 190], [2830, 390, 180], [3100, 480, 190],
         [3395, 520, 170], [3650, 450, 190], [3910, 390, 180],
         [4170, 495, 190], [4570, 430, 170]
-      ].forEach(([x, y, width]) => this.addStaticPlatform(x, y, width));
+      ].filter(([x]) => this.worldId !== "mars" || x !== 870)
+        .forEach(([x, y, width]) => this.addStaticPlatform(x, y, width));
 
       this.addFallingPlatform(1460, 370);
       this.addFallingPlatform(3030, 320);
